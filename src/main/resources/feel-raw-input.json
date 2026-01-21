@@ -1,0 +1,114 @@
+{
+    "rules": [
+        {
+            "code": "EUR_EXEC_WINDOW",
+            "name": "Requested Execution Date must be within demo window",
+            "status": "Enabled",
+            "lastUpdated": "07 Nov 2025",
+            "notes": null,
+            "validations": [
+                {
+                    "field": "transaction.requestedExecutionDate",
+                    "type": "date",
+                    "op": "Between",
+                    "source": "static",
+                    "values": [
+                        "2025-11-01",
+                        "2025-12-01"
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "PKR_IBAN_EXISTS",
+            "name": "Beneficiary IBAN must be present for PKR",
+            "status": "Enabled",
+            "lastUpdated": "06 Nov 2025",
+            "notes": null,
+            "validations": [
+                {
+                    "field": "transaction.beneficiaryIban",
+                    "type": "string",
+                    "op": "Exists",
+                    "source": "static",
+                    "values": [
+                        "dddd"
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "BRL_CNPJ_FORMAT",
+            "name": "Beneficiary CNPJ must match 00.000.000/0000-00",
+            "status": "Disabled",
+            "lastUpdated": "03 Nov 2025",
+            "notes": null,
+            "validations": [
+                {
+                    "field": "transaction.beneficiaryTaxId",
+                    "type": "string",
+                    "op": "Matches",
+                    "source": "static",
+                    "values": [
+                        "^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}$"
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "SGD_MIN_AMOUNT",
+            "name": "Amount must be ≥ 30.00 SGD",
+            "status": "Enabled",
+            "lastUpdated": "05 Nov 2025",
+            "notes": null,
+            "validations": [
+                {
+                    "field": "transaction.amount",
+                    "type": "number",
+                    "op": "GreaterOrEqual",
+                    "source": "static",
+                    "values": [
+                        "30.00"
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "AE_POP_PRDM",
+            "name": "UAE Purpose of Payment must be in PRDM PoP list",
+            "status": "Enabled",
+            "lastUpdated": "14 Nov 2025",
+            "notes": null,
+            "validations": [
+                {
+                    "field": "transaction.purposeCode",
+                    "type": "string",
+                    "op": "In",
+                    "source": "prdm",
+                    "values": [
+                        "PRDM_POP_AE"
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "GL_MSGTYPE_STATIC",
+            "name": "Message Type must be one of [pain.001, pacs.008]",
+            "status": "Enabled",
+            "lastUpdated": "12 Nov 2025",
+            "notes": null,
+            "validations": [
+                {
+                    "field": "transaction.messageType",
+                    "type": "string",
+                    "op": "In",
+                    "source": "static",
+                    "values": [
+                        "pain.001",
+                        "pacs.008"
+                    ]
+                }
+            ]
+        }
+    ]
+}

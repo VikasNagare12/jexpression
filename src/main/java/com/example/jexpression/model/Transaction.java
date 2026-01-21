@@ -1,10 +1,22 @@
 package com.example.jexpression.model;
 
+/**
+ * Transaction DTO for FEEL rule evaluation.
+ */
 public class Transaction {
     private String country;
     private String channel;
     private Payment payment;
+    private String transactionDate;
 
+    // Fields matching FEEL expressions
+    private Double amount;
+    private String messageType;
+    private String beneficiaryIban;
+    private String purposeCode;
+    private String requestedExecutionDate;
+
+    // Getters and Setters
     public String getCountry() {
         return country;
     }
@@ -29,15 +41,6 @@ public class Transaction {
         this.payment = payment;
     }
 
-    // Derived/Computed Getter: This will be serialized as "derivedStatus" in JSON
-    public String getDerivedStatus() {
-        if (country == null)
-            return "Unknown";
-        return "COMPUTED_" + country;
-    }
-
-    private String transactionDate;
-
     public String getTransactionDate() {
         return transactionDate;
     }
@@ -46,16 +49,43 @@ public class Transaction {
         this.transactionDate = transactionDate;
     }
 
-    // Helper for Rule Logic: Convert ISO Date to Numeric (YYYYMMDD) or Epoch
-    // Simple approach: YYYYMMDD as long
-    public long getTransactionDateNumeric() {
-        if (transactionDate == null)
-            return 0;
-        return Long.parseLong(transactionDate.replace("-", ""));
+    public Double getAmount() {
+        return amount;
     }
 
-    // This method provides a dynamic value for logic comparison
-    public String getExpectedCurrency() {
-        return "SAR"; // In real life, this could apply complex logic
+    public void setAmount(Double amount) {
+        this.amount = amount;
+    }
+
+    public String getMessageType() {
+        return messageType;
+    }
+
+    public void setMessageType(String messageType) {
+        this.messageType = messageType;
+    }
+
+    public String getBeneficiaryIban() {
+        return beneficiaryIban;
+    }
+
+    public void setBeneficiaryIban(String beneficiaryIban) {
+        this.beneficiaryIban = beneficiaryIban;
+    }
+
+    public String getPurposeCode() {
+        return purposeCode;
+    }
+
+    public void setPurposeCode(String purposeCode) {
+        this.purposeCode = purposeCode;
+    }
+
+    public String getRequestedExecutionDate() {
+        return requestedExecutionDate;
+    }
+
+    public void setRequestedExecutionDate(String requestedExecutionDate) {
+        this.requestedExecutionDate = requestedExecutionDate;
     }
 }
