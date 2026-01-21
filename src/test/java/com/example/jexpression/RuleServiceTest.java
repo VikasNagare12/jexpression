@@ -1,105 +1,89 @@
 package com.example.jexpression;
 
 import com.example.jexpression.model.Action;
+import com.example.jexpression.model.Amount;
+import com.example.jexpression.model.Payment;
 import com.example.jexpression.model.Rule;
 import com.example.jexpression.model.Transaction;
-import com.example.jexpression.model.Payment;
-import com.example.jexpression.model.Amount;
 import com.example.jexpression.service.RuleService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class RuleServiceTest {
 
   private ObjectMapper objectMapper;
   private RuleService ruleService;
 
-  @BeforeEach
-  public void setup() {
-    objectMapper = new ObjectMapper();
-    ruleService = new RuleService(objectMapper, java.util.Collections.emptyList());
-  }
+    @BeforeEach
+    void setup() {
+      objectMapper = new ObjectMapper();
+        ruleService = new RuleService(objectMapper);
+      }
 
-  @Test
-  void testEvaluateRule_Match() throws Exception {
-    // Construct the Rule object from the user's JSON example
-    String ruleJson = """
-            {
-              "ruleId": "R_SA_AMOUNT_CHECK",
-              "version": 1,
-              "priority": 10,
-              "status": "ACTIVE",
-              "effectiveFrom": "2026-01-01T00:00:00Z",
-              "effectiveTo": "9999-12-31T23:59:59Z",
-              "index": {
-                "country": ["SA"],
-                "channel": ["SWIFT"],
-                "currency": ["SAR"]
-              },
-              "logic": {
-                "and": [
-                  { "<":  [ { "var": "payment.amount.value" }, 30 ] },
-                  { "==": [ { "var": "payment.amount.currency" }, "SAR" ] }
-                ]
-              },
-              "action": {
-                "status": "REJECT",
-                "reasonCode": "SA01"
-              }
-            }
-        """;
+    @Test
+    void testEvaluate_FilterMatchLogicMatch_ReturnsAction() throws Exception {
+      Rule rule = createRule();
+      Transaction tx = createTransaction("SA", "SWIFT", 50.0, "SAR");
 
-    Rule rule = objectMapper.readValue(ruleJson, Rule.class);
+      Optional<Action> result = ruleService.evaluate(rule, tx);
 
-    // precise match data
-    Amount amount = new Amount();
-    amount.setValue(29.0);
-    amount.setCurrency("SAR");
+      assertTrue(result.isPresent());
+      assertEquals("REJECT", result.get().getStatus());
+    }
 
-    Payment payment = new Payment();
-    payment.setAmount(amount);
+    @Test
+    void testEvaluate_FilterMismatch_ReturnsEmpty() throws Exception {
+      Rule rule = createRule();
+      Transaction tx = createTransaction("AE", "SWIFT", 50.0, "SAR");
 
-    Transaction data = new Transaction();
-    data.setPayment(payment);
+        Optional<Action> result = ruleService.evaluate(rule, tx);
 
-    boolean matched = ruleService.evaluate(rule, data);
+        assertTrue(result.isEmpty());
+      }
 
-    assertTrue(matched, "Rule should match");
-  }
+    @Test
+    void testEvaluate_FilterMatchLogicMismatch_ReturnsEmpty() throws Exception {
+      Rule rule = createRule();
+      Transaction tx = createTransaction("SA", "SWIFT", 150.0, "SAR");
 
-  @Test
-  void testEvaluateRule_NoMatch() throws Exception {
-    // Same rule
-    String ruleJson = """
-            {
-              "logic": {
-                "and": [
-                  { "<":  [ { "var": "payment.amount.value" }, 30 ] },
-                  { "==": [ { "var": "payment.amount.currency" }, "SAR" ] }
-                ]
-              },
-              "action": { "status": "REJECT", "reasonCode": "SA01" }
-            }
-        """;
-    Rule rule = objectMapper.readValue(ruleJson, Rule.class);
+        Optional<Action> result = ruleService.evaluate(rule, tx);
 
-    // Non-matching data (amount > 30)
-    Amount amount = new Amount();
-    amount.setValue(50.0);
-    amount.setCurrency("SAR");
+        assertTrue(result.isEmpty());
+      }
 
-    Payment payment = new Payment();
-    payment.setAmount(amount);
+    private Rule createRule() {
+      Rule rule = new Rule();
+      rule.setRuleId("TEST_RULE");
+      rule.setIndex(Map.of("country", List.of("SA"), "channel", List.of("SWIFT")));
+      rule.setLogic(Map.of("<", List.of(Map.of("var", "payment.amount.value"), 100)));
 
-    Transaction data = new Transaction();
-    data.setPayment(payment);
+      Action action = new Action();
+      action.setStatus("REJECT");
+      action.setReasonCode("TEST01");
+      rule.setAction(action);
 
-    boolean matched = ruleService.evaluate(rule, data);
+      return rule;
+    }
 
-    assertFalse(matched, "Rule should not match");
-  }
+    private Transaction createTransaction(String country, String channel, double amount, String currency) {
+      Transaction tx = new Transaction();
+      tx.setCountry(country);
+      tx.setChannel(channel);
+
+        Payment payment = new Payment();
+        Amount amt = new Amount();
+        amt.setValue(amount);
+        amt.setCurrency(currency);
+        payment.setAmount(amt);
+        tx.setPayment(payment);
+
+        return tx;
+      }
 }

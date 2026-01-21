@@ -1,22 +1,11 @@
 {
   "ruleId": "R_SA_AMOUNT_CHECK",
-  "version": 1,
-  "priority": 10,
-  "status": "ACTIVE",
-  "effectiveFrom": "2026-01-01T00:00:00Z",
-  "effectiveTo": "9999-12-31T23:59:59Z",
   "index": {
     "country": [
       "SA"
     ],
     "channel": [
       "SWIFT"
-    ],
-    "payment.amount.currency": [
-      "SAR"
-    ],
-    "derivedStatus": [
-      "COMPUTED_SA"
     ]
   },
   "logic": {
@@ -26,9 +15,7 @@
           {
             "var": "payment.amount.value"
           },
-          {
-            "var": "db.dailyLimit"
-          }
+          100
         ]
       },
       {
@@ -36,18 +23,7 @@
           {
             "var": "payment.amount.currency"
           },
-          {
-            "var": "expectedCurrency"
-          }
-        ]
-      },
-      {
-        "<=": [
-          20260101,
-          {
-            "var": "transactionDateNumeric"
-          },
-          20261231
+          "SAR"
         ]
       }
     ]
