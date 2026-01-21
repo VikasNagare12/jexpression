@@ -7,3 +7,5 @@ mvnw.cmd
 .DS_Store
 *.class
 *.log
+src/main/resources/feel-raw-input.json
+src/main/resources/feel-expressions.json
