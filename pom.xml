@@ -47,14 +47,7 @@
         <dependency>
             <groupId>org.kie</groupId>
             <artifactId>kie-dmn-feel</artifactId>
-            <version>9.44.0.Final</version>
-            <exclusions>
-                <!-- Exclude problematic transitive dependencies -->
-                <exclusion>
-                    <groupId>org.kie</groupId>
-                    <artifactId>kie-dmn-core</artifactId>
-                </exclusion>
-            </exclusions>
+            <version>7.74.0.Final</version>
         </dependency>
 	</dependencies>
 
