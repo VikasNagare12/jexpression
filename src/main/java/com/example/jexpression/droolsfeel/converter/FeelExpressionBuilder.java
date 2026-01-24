@@ -1,58 +1,73 @@
 package com.example.jexpression.droolsfeel.converter;
 
 import com.example.jexpression.droolsfeel.model.RuleCondition;
-import com.example.jexpression.droolsfeel.model.FeelOperator;
-import org.apache.commons.lang3.StringUtils;
 
 /**
- * Converts RuleCondition to FEEL expression using type-safe builder.
+ * Converts RuleCondition to FEEL expression string.
  */
 public final class FeelExpressionBuilder {
 
     private FeelExpressionBuilder() {}
 
     public static String toFeel(RuleCondition c) {
-        var fb = fieldBuilder(c);
-        var op = c.operator();
+        String f = c.field();
 
-        return switch (op) {
-            case EQUALS -> fb.equalsValue(typedValue(c, 0)).build();
-            case NOT_EQUALS -> fb.notEquals(typedValue(c, 0)).build();
-            case GREATER -> fb.greaterThan(numValue(c)).build();
-            case GREATER_OR_EQUAL -> fb.greaterOrEqual(numValue(c)).build();
-            case LESS -> fb.lessThan(numValue(c)).build();
-            case LESS_OR_EQUAL -> fb.lessOrEqual(numValue(c)).build();
-            case BETWEEN -> fb.between(typedValue(c, 0), typedValue(c, 1)).build();
-            case IN -> fb.in(c.values().toArray()).build();
-            case NOT_IN -> fb.notIn(c.values().toArray()).build();
-            case CONTAINS -> fb.contains(c.firstValue()).build();
-            case STARTS_WITH -> fb.startsWith(c.firstValue()).build();
-            case ENDS_WITH -> fb.endsWith(c.firstValue()).build();
-            case MATCHES -> fb.matches(c.firstValue()).build();
-            case EXISTS, IS_NOT_NULL -> fb.isNotNull().build();
-            case IS_NULL -> fb.isNull().build();
-            case LIST_CONTAINS -> fb.in(c.firstValue()).build();
+        return switch (c.op()) {
+            // Comparison
+            case "Equals" -> isString(c) ? Expr.strEq(f, c.firstValue()) : Expr.eq(f, typed(c));
+            case "NotEquals" -> isString(c) ? Expr.strNeq(f, c.firstValue()) : Expr.neq(f, typed(c));
+            case "Greater" -> Expr.gt(f, num(c));
+            case "GreaterOrEqual" -> Expr.gte(f, num(c));
+            case "Less" -> Expr.lt(f, num(c));
+            case "LessOrEqual" -> Expr.lte(f, num(c));
+
+            // Range
+            case "Between" -> isDate(c)
+                    ? Expr.dateBetween(f, c.firstValue(), c.secondValue())
+                    : Expr.between(f, typed(c, 0), typed(c, 1));
+            case "In" -> isString(c)
+                    ? Expr.strIn(f, c.values().toArray(String[]::new))
+                    : Expr.in(f, c.values().toArray());
+            case "NotIn" -> Expr.notIn(f, c.values().toArray());
+
+            // String
+            case "Contains" -> Expr.contains(f, c.firstValue());
+            case "StartsWith" -> Expr.startsWith(f, c.firstValue());
+            case "EndsWith" -> Expr.endsWith(f, c.firstValue());
+            case "Matches" -> Expr.matches(f, c.firstValue());
+
+            // Null
+            case "Exists", "IsNotNull" -> Expr.isNotNull(f);
+            case "IsNull" -> Expr.isNull(f);
+
+            // List
+            case "ListContains" -> Expr.in(f, c.firstValue());
+
+            default -> throw new IllegalArgumentException("Unknown operator: " + c.op());
         };
     }
 
-    private static FeelExpression.FieldBuilder fieldBuilder(RuleCondition c) {
-        var type = StringUtils.defaultIfBlank(c.type(), "string").toLowerCase();
-        return switch (type) {
-            case "number", "boolean" -> FeelExpression.field(c.field());
-            case "date", "datetime" -> FeelExpression.dateField(c.field());
-            default -> FeelExpression.stringField(c.field());
-        };
+    private static boolean isString(RuleCondition c) {
+        return c.type() == null || "string".equalsIgnoreCase(c.type());
     }
 
-    private static Object typedValue(RuleCondition c, int index) {
-        var val = index == 0 ? c.firstValue() : c.secondValue();
-        if (StringUtils.isBlank(val))
+    private static boolean isDate(RuleCondition c) {
+        return "date".equalsIgnoreCase(c.type());
+    }
+
+    private static Object typed(RuleCondition c) {
+        return typed(c, 0);
+    }
+
+    private static Object typed(RuleCondition c, int idx) {
+        String val = idx == 0 ? c.firstValue() : c.secondValue();
+        if (val == null)
             return null;
         return c.isNumber() ? Double.parseDouble(val) : val;
     }
 
-    private static Number numValue(RuleCondition c) {
-        var val = c.firstValue();
-        return StringUtils.isNotBlank(val) ? Double.parseDouble(val) : 0;
+    private static Number num(RuleCondition c) {
+        String val = c.firstValue();
+        return val != null ? Double.parseDouble(val) : 0;
     }
 }
