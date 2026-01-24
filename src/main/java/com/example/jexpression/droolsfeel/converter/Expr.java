@@ -62,23 +62,23 @@ public final class Expr {
     // ═══════════════════════════════════════════════════════════════
 
     public static String strEq(String field, String value) {
-        return "lower case(%s) = \"%s\"".formatted(field, value.toLowerCase());
+        return "lower case(%s) = lower case(\"%s\")".formatted(field, value);
     }
 
     public static String strNeq(String field, String value) {
-        return "lower case(%s) != \"%s\"".formatted(field, value.toLowerCase());
+        return "lower case(%s) != lower case(\"%s\")".formatted(field, value);
     }
 
     public static String contains(String field, String value) {
-        return "contains(lower case(%s), \"%s\")".formatted(field, value.toLowerCase());
+        return "contains(lower case(%s), lower case(\"%s\"))".formatted(field, value);
     }
 
     public static String startsWith(String field, String value) {
-        return "starts with(lower case(%s), \"%s\")".formatted(field, value.toLowerCase());
+        return "starts with(lower case(%s), lower case(\"%s\"))".formatted(field, value);
     }
 
     public static String endsWith(String field, String value) {
-        return "ends with(lower case(%s), \"%s\")".formatted(field, value.toLowerCase());
+        return "ends with(lower case(%s), lower case(\"%s\"))".formatted(field, value);
     }
 
     public static String matches(String field, String pattern) {
@@ -143,7 +143,7 @@ public final class Expr {
 
     public static String strIn(String field, String... values) {
         String list = Arrays.stream(values)
-            .map(v -> "\"%s\"".formatted(v.toLowerCase()))
+                .map(v -> "lower case(\"%s\")".formatted(v))
             .collect(Collectors.joining(", "));
         return "lower case(%s) in [%s]".formatted(field, list);
     }
