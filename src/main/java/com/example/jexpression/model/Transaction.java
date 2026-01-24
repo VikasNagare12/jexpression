@@ -6,15 +6,13 @@ package com.example.jexpression.model;
 public class Transaction {
     private String country;
     private String channel;
-    private Payment payment;
     private String transactionDate;
-
-    // Fields matching FEEL expressions
     private Double amount;
     private String messageType;
     private String beneficiaryIban;
     private String purposeCode;
     private String requestedExecutionDate;
+    private String currency;
 
     // Getters and Setters
     public String getCountry() {
@@ -31,14 +29,6 @@ public class Transaction {
 
     public void setChannel(String channel) {
         this.channel = channel;
-    }
-
-    public Payment getPayment() {
-        return payment;
-    }
-
-    public void setPayment(Payment payment) {
-        this.payment = payment;
     }
 
     public String getTransactionDate() {
@@ -87,5 +77,13 @@ public class Transaction {
 
     public void setRequestedExecutionDate(String requestedExecutionDate) {
         this.requestedExecutionDate = requestedExecutionDate;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 }
