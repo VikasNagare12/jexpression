@@ -10,38 +10,39 @@ public final class FeelExpressionBuilder {
     private FeelExpressionBuilder() {}
 
     public static String toFeel(RuleCondition c) {
-        String f = c.field();
+        String field = c.field();
 
         return switch (c.op()) {
             // Comparison
-            case "Equals" -> isString(c) ? Expr.strEq(f, c.firstValue()) : Expr.eq(f, typed(c));
-            case "NotEquals" -> isString(c) ? Expr.strNeq(f, c.firstValue()) : Expr.neq(f, typed(c));
-            case "Greater" -> Expr.gt(f, num(c));
-            case "GreaterOrEqual" -> Expr.gte(f, num(c));
-            case "Less" -> Expr.lt(f, num(c));
-            case "LessOrEqual" -> Expr.lte(f, num(c));
+            case "Equals" -> isString(c) ? Expr.stringEquals(field, c.firstValue()) : Expr.equals(field, typed(c));
+            case "NotEquals" ->
+                isString(c) ? Expr.stringNotEquals(field, c.firstValue()) : Expr.notEquals(field, typed(c));
+            case "Greater" -> Expr.greaterThan(field, num(c));
+            case "GreaterOrEqual" -> Expr.greaterOrEqual(field, num(c));
+            case "Less" -> Expr.lessThan(field, num(c));
+            case "LessOrEqual" -> Expr.lessOrEqual(field, num(c));
 
             // Range
             case "Between" -> isDate(c)
-                    ? Expr.dateBetween(f, c.firstValue(), c.secondValue())
-                    : Expr.between(f, typed(c, 0), typed(c, 1));
+                    ? Expr.dateBetween(field, c.firstValue(), c.secondValue())
+                    : Expr.between(field, typed(c, 0), typed(c, 1));
             case "In" -> isString(c)
-                    ? Expr.strIn(f, c.values().toArray(String[]::new))
-                    : Expr.in(f, c.values().toArray());
-            case "NotIn" -> Expr.notIn(f, c.values().toArray());
+                    ? Expr.stringInList(field, c.values().toArray(String[]::new))
+                    : Expr.inList(field, c.values().toArray());
+            case "NotIn" -> Expr.notInList(field, c.values().toArray());
 
             // String
-            case "Contains" -> Expr.contains(f, c.firstValue());
-            case "StartsWith" -> Expr.startsWith(f, c.firstValue());
-            case "EndsWith" -> Expr.endsWith(f, c.firstValue());
-            case "Matches" -> Expr.matches(f, c.firstValue());
+            case "Contains" -> Expr.contains(field, c.firstValue());
+            case "StartsWith" -> Expr.startsWith(field, c.firstValue());
+            case "EndsWith" -> Expr.endsWith(field, c.firstValue());
+            case "Matches" -> Expr.matches(field, c.firstValue());
 
             // Null
-            case "Exists", "IsNotNull" -> Expr.isNotNull(f);
-            case "IsNull" -> Expr.isNull(f);
+            case "Exists", "IsNotNull" -> Expr.isNotNull(field);
+            case "IsNull" -> Expr.isNull(field);
 
             // List
-            case "ListContains" -> Expr.in(f, c.firstValue());
+            case "ListContains" -> Expr.inList(field, c.firstValue());
 
             default -> throw new IllegalArgumentException("Unknown operator: " + c.op());
         };
@@ -59,8 +60,8 @@ public final class FeelExpressionBuilder {
         return typed(c, 0);
     }
 
-    private static Object typed(RuleCondition c, int idx) {
-        String val = idx == 0 ? c.firstValue() : c.secondValue();
+    private static Object typed(RuleCondition c, int index) {
+        String val = index == 0 ? c.firstValue() : c.secondValue();
         if (val == null)
             return null;
         return c.isNumber() ? Double.parseDouble(val) : val;
