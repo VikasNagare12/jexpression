@@ -45,16 +45,16 @@ public enum FeelTemplate {
     // Date Operators
     DATE_EQUALS("Equals", DataType.DATE, 2, "date({0}) = date(\"{1}\")"),
     DATE_GREATER_THAN("Greater", DataType.DATE, 2, "date({0}) > date(\"{1}\")"),
-            DATE_GREATER_OR_EQUAL("GreaterOrEqual", DataType.DATE, 2, "date({0}) >= date(\"{1}\")"),
-    DATE_LESS_THAN("Less", DataType.DATE, 2, "date({0}) < date(\"{1}\")"),
+    DATE_GREATER_OR_EQUAL("GreaterOrEqual", DataType.DATE, 2, "date({0}) >= date(\"{1}\")"),
+            DATE_LESS_THAN("Less", DataType.DATE, 2, "date({0}) < date(\"{1}\")"),
     DATE_LESS_OR_EQUAL("LessOrEqual", DataType.DATE, 2, "date({0}) <= date(\"{1}\")"),
     DATE_BETWEEN("Between", DataType.DATE, 3, "date({0}) >= date(\"{1}\") and date({0}) <= date(\"{2}\")"),
 
     // Generic Operators
     IS_NULL("IsNull", DataType.ANY, 1, "{0} = null"),
     IS_NOT_NULL("IsNotNull", DataType.ANY, 1, "{0} != null"),
-            EXISTS("Exists", DataType.ANY, 1, "{0} != null"),
-    NOT("Not", DataType.ANY, 1, "not({0})"),
+    EXISTS("Exists", DataType.ANY, 1, "{0} != null"),
+            NOT("Not", DataType.ANY, 1, "not({0})"),
     LIST_CONTAINS("ListContains", DataType.ANY, 2, "list contains({0}, {1})");
 
     public enum DataType {
@@ -158,31 +158,7 @@ public enum FeelTemplate {
         return MessageFormat.format(pattern, formatValue(field), list);
     }
 
-    public static String and(String... expressions) {
-        validateNotEmpty(expressions, "expressions");
-        return String.join(" and ", expressions);
-    }
-
-    public static String or(String... expressions) {
-        validateNotEmpty(expressions, "expressions");
-        return String.join(" or ", expressions);
-    }
-
-    public String getOperator() {
-        return operator;
-    }
-
-    public DataType getDataType() {
-        return dataType;
-    }
-
-    public int getArgCount() {
-        return argCount;
-    }
-
-    public String getPattern() {
-        return pattern;
-    }
+    // Unused methods removed: and(), or(), getters...
 
     private void validateArgCount(int actual) {
         if (actual != argCount) {
