@@ -2,6 +2,7 @@ package com.example.jexpression.droolsfeel.converter;
 
 import com.example.jexpression.droolsfeel.model.FeelOperator;
 import com.example.jexpression.droolsfeel.model.Validation;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Converts Validation to FEEL expression using type-safe builder.
@@ -14,8 +15,8 @@ public final class FeelExpressionBuilder {
      * Convert validation to FEEL expression.
      */
     public static String toFeel(Validation v) {
-        FeelOperator op = v.operator();
-        FeelExpression.FieldBuilder fb = fieldBuilder(v);
+        var fb = fieldBuilder(v);
+        var op = v.operator();
 
         return switch (op) {
             // Comparison
@@ -50,7 +51,8 @@ public final class FeelExpressionBuilder {
      * Create appropriate field builder based on type.
      */
     private static FeelExpression.FieldBuilder fieldBuilder(Validation v) {
-        return switch (v.type() != null ? v.type().toLowerCase() : "string") {
+        var type = StringUtils.defaultIfBlank(v.type(), "string").toLowerCase();
+        return switch (type) {
             case "number", "boolean" -> FeelExpression.field(v.field());
             case "date", "datetime" -> FeelExpression.dateField(v.field());
             default -> FeelExpression.stringField(v.field());
@@ -61,21 +63,18 @@ public final class FeelExpressionBuilder {
      * Get typed value at index.
      */
     private static Object typedValue(Validation v, int index) {
-        String val = index == 0 ? v.firstValue() : v.secondValue();
-        if (val == null)
+        var val = index == 0 ? v.firstValue() : v.secondValue();
+        if (StringUtils.isBlank(val))
             return null;
 
-        if (v.isNumber()) {
-            return Double.parseDouble(val);
-        }
-        return val;
+        return v.isNumber() ? Double.parseDouble(val) : val;
     }
 
     /**
      * Get numeric value.
      */
     private static Number numValue(Validation v) {
-        String val = v.firstValue();
-        return val != null ? Double.parseDouble(val) : 0;
+        var val = v.firstValue();
+        return StringUtils.isNotBlank(val) ? Double.parseDouble(val) : 0;
     }
 }
