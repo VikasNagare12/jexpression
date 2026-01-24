@@ -22,10 +22,7 @@ import java.util.stream.Collectors;
  */
 public enum FeelTemplate {
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // COMPARISON
-    // ═══════════════════════════════════════════════════════════════════════════
-
+    // Comparators
     EQUALS("Equals", DataType.NUMBER, 2, "{0} = {1}"),
     NOT_EQUALS("NotEquals", DataType.NUMBER, 2, "{0} != {1}"),
     GREATER_THAN("Greater", DataType.NUMBER, 2, "{0} > {1}"),
@@ -36,10 +33,7 @@ public enum FeelTemplate {
     IN_LIST("In", DataType.NUMBER, 2, "{0} in [{1}]"),
     NOT_IN_LIST("NotIn", DataType.NUMBER, 2, "not({0} in [{1}])"),
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // STRING (case-insensitive)
-    // ═══════════════════════════════════════════════════════════════════════════
-
+    // String Operators (case-insensitive)
     STRING_EQUALS("Equals", DataType.STRING, 2, "lower case({0}) = lower case(\"{1}\")"),
     STRING_NOT_EQUALS("NotEquals", DataType.STRING, 2, "lower case({0}) != lower case(\"{1}\")"),
     STRING_IN_LIST("In", DataType.STRING, 2, "lower case({0}) in [{1}]"),
@@ -48,47 +42,27 @@ public enum FeelTemplate {
     ENDS_WITH("EndsWith", DataType.STRING, 2, "ends with(lower case({0}), lower case(\"{1}\"))"),
     MATCHES("Matches", DataType.STRING, 2, "matches({0}, \"{1}\", \"i\")"),
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // DATE
-    // ═══════════════════════════════════════════════════════════════════════════
-
+    // Date Operators
     DATE_EQUALS("Equals", DataType.DATE, 2, "date({0}) = date(\"{1}\")"),
-            DATE_GREATER_THAN("Greater", DataType.DATE, 2, "date({0}) > date(\"{1}\")"),
-    DATE_GREATER_OR_EQUAL("GreaterOrEqual", DataType.DATE, 2, "date({0}) >= date(\"{1}\")"),
+    DATE_GREATER_THAN("Greater", DataType.DATE, 2, "date({0}) > date(\"{1}\")"),
+            DATE_GREATER_OR_EQUAL("GreaterOrEqual", DataType.DATE, 2, "date({0}) >= date(\"{1}\")"),
     DATE_LESS_THAN("Less", DataType.DATE, 2, "date({0}) < date(\"{1}\")"),
     DATE_LESS_OR_EQUAL("LessOrEqual", DataType.DATE, 2, "date({0}) <= date(\"{1}\")"),
     DATE_BETWEEN("Between", DataType.DATE, 3, "date({0}) >= date(\"{1}\") and date({0}) <= date(\"{2}\")"),
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // NULL (type-agnostic)
-    // ═══════════════════════════════════════════════════════════════════════════
-
+    // Generic Operators
     IS_NULL("IsNull", DataType.ANY, 1, "{0} = null"),
-            IS_NOT_NULL("IsNotNull", DataType.ANY, 1, "{0} != null"),
-    EXISTS("Exists", DataType.ANY, 1, "{0} != null"),
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // LIST
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    LIST_CONTAINS("ListContains", DataType.ANY, 2, "list contains({0}, {1})"),
-        
-    // ═══════════════════════════════════════════════════════════════════════════
-    // BOOLEAN
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    NOT("Not", DataType.ANY, 1, "not({0})");
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // DATA TYPE ENUM
-    // ═══════════════════════════════════════════════════════════════════════════
+    IS_NOT_NULL("IsNotNull", DataType.ANY, 1, "{0} != null"),
+            EXISTS("Exists", DataType.ANY, 1, "{0} != null"),
+    NOT("Not", DataType.ANY, 1, "not({0})"),
+    LIST_CONTAINS("ListContains", DataType.ANY, 2, "list contains({0}, {1})");
 
     public enum DataType {
         STRING, NUMBER, DATE, BOOLEAN, ANY;
 
         public static DataType fromString(String type) {
             if (type == null)
-                return STRING; // Default to string
+                return STRING;
             return switch (type.toLowerCase()) {
                 case "string" -> STRING;
                 case "number" -> NUMBER;
@@ -99,14 +73,12 @@ public enum FeelTemplate {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // FIELDS
-    // ═══════════════════════════════════════════════════════════════════════════
-
     private final String operator;
     private final DataType dataType;
     private final int argCount;
     private final String pattern;
+
+    private static final Map<String, FeelTemplate> LOOKUP = buildLookup();
 
     FeelTemplate(String operator, DataType dataType, int argCount, String pattern) {
         this.operator = operator;
@@ -114,12 +86,6 @@ public enum FeelTemplate {
         this.argCount = argCount;
         this.pattern = pattern;
     }
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // STATIC LOOKUP
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    private static final Map<String, FeelTemplate> LOOKUP = buildLookup();
 
     private static Map<String, FeelTemplate> buildLookup() {
         return Arrays.stream(values())
@@ -132,26 +98,18 @@ public enum FeelTemplate {
 
     /**
      * Find template by operator and data type.
-     * 
-     * @param operator Operator name (e.g., "Equals", "GreaterOrEqual")
-     * @param type     Data type (e.g., "string", "number", "date")
-     * @return Matching template
-     * @throws IllegalArgumentException if no template found
      */
     public static FeelTemplate forOperator(String operator, String type) {
-        DataType dataType = DataType.fromString(type);
-        return forOperator(operator, dataType);
+        return forOperator(operator, DataType.fromString(type));
     }
 
     /**
      * Find template by operator and data type.
      */
     public static FeelTemplate forOperator(String operator, DataType type) {
-        // Try exact match first
         String key = operator + ":" + type.name();
         FeelTemplate template = LOOKUP.get(key);
 
-        // Fall back to ANY type for null checks, etc
         if (template == null) {
             template = LOOKUP.get(operator + ":" + DataType.ANY.name());
         }
@@ -163,25 +121,19 @@ public enum FeelTemplate {
         return template;
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // PUBLIC API
-    // ═══════════════════════════════════════════════════════════════════════════
-
     /**
      * Apply values to template with validation.
      */
     public String apply(Object... args) {
         validateArgCount(args.length);
-
         Object[] formatted = Arrays.stream(args)
                 .map(this::formatValue)
                 .toArray();
-
         return MessageFormat.format(pattern, formatted);
     }
 
     /**
-     * Apply with list of values (for IN operators).
+     * Apply with list of values (correctly quoted/formatted).
      */
     public String applyWithList(String field, Object... values) {
         Objects.requireNonNull(field, "field must not be null");
@@ -206,25 +158,15 @@ public enum FeelTemplate {
         return MessageFormat.format(pattern, formatValue(field), list);
     }
 
-    /**
-     * Combine multiple expressions with AND.
-     */
     public static String and(String... expressions) {
         validateNotEmpty(expressions, "expressions");
         return String.join(" and ", expressions);
     }
 
-    /**
-     * Combine multiple expressions with OR.
-     */
     public static String or(String... expressions) {
         validateNotEmpty(expressions, "expressions");
         return String.join(" or ", expressions);
     }
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // GETTERS
-    // ═══════════════════════════════════════════════════════════════════════════
 
     public String getOperator() {
         return operator;
@@ -241,10 +183,6 @@ public enum FeelTemplate {
     public String getPattern() {
         return pattern;
     }
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // INTERNAL HELPERS
-    // ═══════════════════════════════════════════════════════════════════════════
 
     private void validateArgCount(int actual) {
         if (actual != argCount) {
