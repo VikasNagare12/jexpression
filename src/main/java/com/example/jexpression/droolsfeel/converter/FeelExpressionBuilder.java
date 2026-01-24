@@ -9,16 +9,7 @@ import java.util.stream.Collectors;
  * Converts Validation to FEEL expression.
  * 
  * <p>
- * All string comparisons are CASE-INSENSITIVE using lower case().
- * 
- * <p>
- * Supports all FEEL operators and data types:
- * <ul>
- * <li>Comparison: Equals, NotEquals, Greater, Less, etc.</li>
- * <li>String: Contains, StartsWith, EndsWith, Matches</li>
- * <li>Range: Between, In, NotIn</li>
- * <li>Null: Exists, IsNull, IsNotNull</li>
- * </ul>
+ * All string comparisons are CASE-INSENSITIVE (handled centrally).
  */
 public final class FeelExpressionBuilder {
 
@@ -59,13 +50,6 @@ public final class FeelExpressionBuilder {
     // ─────────────────────────────────────────────────────────────
 
     private static String simpleComparison(Validation v, FeelOperator op) {
-        // Use case-insensitive comparison for strings
-        if (v.isString()) {
-            return "%s %s %s".formatted(
-                    lowerCase(v.field()),
-                    op.getFeelSymbol(),
-                    lowerCaseValue(v.firstValue()));
-        }
         return "%s %s %s".formatted(field(v), op.getFeelSymbol(), value(v, 0));
     }
 
@@ -77,21 +61,14 @@ public final class FeelExpressionBuilder {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // List/In Operators (Case-Insensitive for Strings)
+    // List/In Operators
     // ─────────────────────────────────────────────────────────────
 
     private static String inList(Validation v) {
-        if (v.isString()) {
-            // Case-insensitive: lower case(field) in [lower case values]
-            String list = v.values().stream()
-                    .map(FeelExpressionBuilder::lowerCaseValue)
-                    .collect(Collectors.joining(", "));
-            return "%s in [%s]".formatted(lowerCase(v.field()), list);
-        }
         String list = v.values().stream()
                 .map(val -> formatValue(val, v.type()))
                 .collect(Collectors.joining(", "));
-        return "%s in [%s]".formatted(v.field(), list);
+        return "%s in [%s]".formatted(field(v), list);
     }
 
     private static String notInList(Validation v) {
@@ -99,39 +76,28 @@ public final class FeelExpressionBuilder {
     }
 
     private static String listContains(Validation v) {
-        if (v.isString()) {
-            return "list contains(%s, %s)".formatted(v.field(), lowerCaseValue(v.firstValue()));
-        }
-        return "list contains(%s, %s)".formatted(v.field(), value(v, 0));
+        return "list contains(%s, %s)".formatted(field(v), value(v, 0));
     }
 
     // ─────────────────────────────────────────────────────────────
-    // String Operators (All Case-Insensitive)
+    // String Operators
     // ─────────────────────────────────────────────────────────────
 
     private static String contains(Validation v) {
-        return "contains(%s, %s)".formatted(
-                lowerCase(v.field()),
-                lowerCaseValue(v.firstValue()));
+        return "contains(%s, %s)".formatted(field(v), value(v, 0));
     }
 
     private static String startsWith(Validation v) {
-        return "starts with(%s, %s)".formatted(
-                lowerCase(v.field()),
-                lowerCaseValue(v.firstValue()));
+        return "starts with(%s, %s)".formatted(field(v), value(v, 0));
     }
 
     private static String endsWith(Validation v) {
-        return "ends with(%s, %s)".formatted(
-                lowerCase(v.field()),
-                lowerCaseValue(v.firstValue()));
+        return "ends with(%s, %s)".formatted(field(v), value(v, 0));
     }
 
     private static String matches(Validation v) {
         // Regex with case-insensitive flag "i"
-        return "matches(%s, %s, \"i\")".formatted(
-                v.field(),
-                stringValue(escape(v.firstValue())));
+        return "matches(%s, %s, \"i\")".formatted(field(v), value(v, 0));
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -147,33 +113,16 @@ public final class FeelExpressionBuilder {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Case-Insensitive Helpers
+    // CENTRAL: Field and Value Formatting
     // ─────────────────────────────────────────────────────────────
 
     /**
-     * Wrap field with lower case() for case-insensitive comparison.
-     */
-    private static String lowerCase(String field) {
-        return "lower case(%s)".formatted(field);
-    }
-
-    /**
-     * Format string value as lower case for comparison.
-     */
-    private static String lowerCaseValue(String val) {
-        if (val == null)
-            return "null";
-        return "\"%s\"".formatted(val.toLowerCase());
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Value Formatting
-    // ─────────────────────────────────────────────────────────────
-
-    /**
-     * Format field with date() wrapper if needed.
+     * Format field - wraps with lower case() for strings, date() for dates.
      */
     private static String field(Validation v) {
+        if (v.isString()) {
+            return "lower case(%s)".formatted(v.field());
+        }
         if (v.isDate()) {
             return "date(%s)".formatted(v.field());
         }
@@ -189,7 +138,7 @@ public final class FeelExpressionBuilder {
     }
 
     /**
-     * Format value based on data type.
+     * Format value - strings are lowercased for case-insensitive comparison.
      */
     private static String formatValue(String val, String type) {
         if (val == null)
@@ -201,15 +150,8 @@ public final class FeelExpressionBuilder {
             case "datetime" -> "date and time(\"%s\")".formatted(val);
             case "time" -> "time(\"%s\")".formatted(val);
             case "boolean" -> val.toLowerCase();
-            default -> stringValue(val); // string
+            default -> "\"%s\"".formatted(val.toLowerCase()); // string: lowercase value
         };
-    }
-
-    /**
-     * Wrap value in quotes.
-     */
-    private static String stringValue(String val) {
-        return "\"%s\"".formatted(val);
     }
 
     /**
