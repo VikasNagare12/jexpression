@@ -9,6 +9,9 @@ import java.util.stream.Collectors;
  * Converts Validation to FEEL expression.
  * 
  * <p>
+ * All string comparisons are CASE-INSENSITIVE using lower case().
+ * 
+ * <p>
  * Supports all FEEL operators and data types:
  * <ul>
  * <li>Comparison: Equals, NotEquals, Greater, Less, etc.</li>
@@ -16,9 +19,6 @@ import java.util.stream.Collectors;
  * <li>Range: Between, In, NotIn</li>
  * <li>Null: Exists, IsNull, IsNotNull</li>
  * </ul>
- * 
- * <p>
- * Date handling uses FEEL date() function for proper comparisons.
  */
 public final class FeelExpressionBuilder {
 
@@ -59,6 +59,13 @@ public final class FeelExpressionBuilder {
     // ─────────────────────────────────────────────────────────────
 
     private static String simpleComparison(Validation v, FeelOperator op) {
+        // Use case-insensitive comparison for strings
+        if (v.isString()) {
+            return "%s %s %s".formatted(
+                    lowerCase(v.field()),
+                    op.getFeelSymbol(),
+                    lowerCaseValue(v.firstValue()));
+        }
         return "%s %s %s".formatted(field(v), op.getFeelSymbol(), value(v, 0));
     }
 
@@ -70,10 +77,17 @@ public final class FeelExpressionBuilder {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // List/In Operators
+    // List/In Operators (Case-Insensitive for Strings)
     // ─────────────────────────────────────────────────────────────
 
     private static String inList(Validation v) {
+        if (v.isString()) {
+            // Case-insensitive: lower case(field) in [lower case values]
+            String list = v.values().stream()
+                    .map(FeelExpressionBuilder::lowerCaseValue)
+                    .collect(Collectors.joining(", "));
+            return "%s in [%s]".formatted(lowerCase(v.field()), list);
+        }
         String list = v.values().stream()
                 .map(val -> formatValue(val, v.type()))
                 .collect(Collectors.joining(", "));
@@ -85,27 +99,39 @@ public final class FeelExpressionBuilder {
     }
 
     private static String listContains(Validation v) {
+        if (v.isString()) {
+            return "list contains(%s, %s)".formatted(v.field(), lowerCaseValue(v.firstValue()));
+        }
         return "list contains(%s, %s)".formatted(v.field(), value(v, 0));
     }
 
     // ─────────────────────────────────────────────────────────────
-    // String Operators
+    // String Operators (All Case-Insensitive)
     // ─────────────────────────────────────────────────────────────
 
     private static String contains(Validation v) {
-        return "contains(%s, %s)".formatted(v.field(), stringValue(v.firstValue()));
+        return "contains(%s, %s)".formatted(
+                lowerCase(v.field()),
+                lowerCaseValue(v.firstValue()));
     }
 
     private static String startsWith(Validation v) {
-        return "starts with(%s, %s)".formatted(v.field(), stringValue(v.firstValue()));
+        return "starts with(%s, %s)".formatted(
+                lowerCase(v.field()),
+                lowerCaseValue(v.firstValue()));
     }
 
     private static String endsWith(Validation v) {
-        return "ends with(%s, %s)".formatted(v.field(), stringValue(v.firstValue()));
+        return "ends with(%s, %s)".formatted(
+                lowerCase(v.field()),
+                lowerCaseValue(v.firstValue()));
     }
 
     private static String matches(Validation v) {
-        return "matches(%s, %s)".formatted(v.field(), stringValue(escape(v.firstValue())));
+        // Regex with case-insensitive flag "i"
+        return "matches(%s, %s, \"i\")".formatted(
+                v.field(),
+                stringValue(escape(v.firstValue())));
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -118,6 +144,26 @@ public final class FeelExpressionBuilder {
 
     private static String isNotNull(Validation v) {
         return "%s != null".formatted(v.field());
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Case-Insensitive Helpers
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Wrap field with lower case() for case-insensitive comparison.
+     */
+    private static String lowerCase(String field) {
+        return "lower case(%s)".formatted(field);
+    }
+
+    /**
+     * Format string value as lower case for comparison.
+     */
+    private static String lowerCaseValue(String val) {
+        if (val == null)
+            return "null";
+        return "\"%s\"".formatted(val.toLowerCase());
     }
 
     // ─────────────────────────────────────────────────────────────
