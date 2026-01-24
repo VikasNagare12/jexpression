@@ -3,7 +3,8 @@ package com.example.jexpression.droolsfeel.converter;
 import com.example.jexpression.droolsfeel.model.RuleCondition;
 
 /**
- * Converts RuleCondition to FEEL expression string.
+ * Converts RuleCondition to FEEL expression using pre-defined templates.
+ * No string building - just select template and apply values.
  */
 public final class FeelExpressionBuilder {
 
@@ -14,35 +15,38 @@ public final class FeelExpressionBuilder {
 
         return switch (c.op()) {
             // Comparison
-            case "Equals" -> isString(c) ? Expr.stringEquals(field, c.firstValue()) : Expr.equals(field, typed(c));
-            case "NotEquals" ->
-                isString(c) ? Expr.stringNotEquals(field, c.firstValue()) : Expr.notEquals(field, typed(c));
-            case "Greater" -> Expr.greaterThan(field, num(c));
-            case "GreaterOrEqual" -> Expr.greaterOrEqual(field, num(c));
-            case "Less" -> Expr.lessThan(field, num(c));
-            case "LessOrEqual" -> Expr.lessOrEqual(field, num(c));
+            case "Equals" -> isString(c)
+                    ? FeelTemplate.STRING_EQUALS.apply(field, c.firstValue())
+                    : FeelTemplate.EQUALS.apply(field, typed(c));
+            case "NotEquals" -> isString(c)
+                    ? FeelTemplate.STRING_NOT_EQUALS.apply(field, c.firstValue())
+                    : FeelTemplate.NOT_EQUALS.apply(field, typed(c));
+            case "Greater" -> FeelTemplate.GREATER_THAN.apply(field, num(c));
+            case "GreaterOrEqual" -> FeelTemplate.GREATER_OR_EQUAL.apply(field, num(c));
+            case "Less" -> FeelTemplate.LESS_THAN.apply(field, num(c));
+            case "LessOrEqual" -> FeelTemplate.LESS_OR_EQUAL.apply(field, num(c));
 
             // Range
             case "Between" -> isDate(c)
-                    ? Expr.dateBetween(field, c.firstValue(), c.secondValue())
-                    : Expr.between(field, typed(c, 0), typed(c, 1));
+                    ? FeelTemplate.DATE_BETWEEN.apply(field, c.firstValue(), c.secondValue())
+                    : FeelTemplate.BETWEEN.apply(field, typed(c, 0), typed(c, 1));
             case "In" -> isString(c)
-                    ? Expr.stringInList(field, c.values().toArray(String[]::new))
-                    : Expr.inList(field, c.values().toArray());
-            case "NotIn" -> Expr.notInList(field, c.values().toArray());
+                    ? FeelTemplate.STRING_IN_LIST.applyWithStringList(field, c.values().toArray(String[]::new))
+                    : FeelTemplate.IN_LIST.applyWithList(field, c.values().toArray());
+            case "NotIn" -> FeelTemplate.NOT_IN_LIST.applyWithList(field, c.values().toArray());
 
             // String
-            case "Contains" -> Expr.contains(field, c.firstValue());
-            case "StartsWith" -> Expr.startsWith(field, c.firstValue());
-            case "EndsWith" -> Expr.endsWith(field, c.firstValue());
-            case "Matches" -> Expr.matches(field, c.firstValue());
+            case "Contains" -> FeelTemplate.CONTAINS.apply(field, c.firstValue());
+            case "StartsWith" -> FeelTemplate.STARTS_WITH.apply(field, c.firstValue());
+            case "EndsWith" -> FeelTemplate.ENDS_WITH.apply(field, c.firstValue());
+            case "Matches" -> FeelTemplate.MATCHES.apply(field, c.firstValue());
 
             // Null
-            case "Exists", "IsNotNull" -> Expr.isNotNull(field);
-            case "IsNull" -> Expr.isNull(field);
+            case "Exists", "IsNotNull" -> FeelTemplate.IS_NOT_NULL.apply(field);
+            case "IsNull" -> FeelTemplate.IS_NULL.apply(field);
 
             // List
-            case "ListContains" -> Expr.inList(field, c.firstValue());
+            case "ListContains" -> FeelTemplate.LIST_CONTAINS.apply(field, c.firstValue());
 
             default -> throw new IllegalArgumentException("Unknown operator: " + c.op());
         };
