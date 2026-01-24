@@ -46,16 +46,16 @@ public enum FeelTemplate {
     DATE_EQUALS("Equals", DataType.DATE, 2, "date({0}) = date(\"{1}\")"),
     DATE_GREATER_THAN("Greater", DataType.DATE, 2, "date({0}) > date(\"{1}\")"),
     DATE_GREATER_OR_EQUAL("GreaterOrEqual", DataType.DATE, 2, "date({0}) >= date(\"{1}\")"),
-            DATE_LESS_THAN("Less", DataType.DATE, 2, "date({0}) < date(\"{1}\")"),
-    DATE_LESS_OR_EQUAL("LessOrEqual", DataType.DATE, 2, "date({0}) <= date(\"{1}\")"),
+    DATE_LESS_THAN("Less", DataType.DATE, 2, "date({0}) < date(\"{1}\")"),
+            DATE_LESS_OR_EQUAL("LessOrEqual", DataType.DATE, 2, "date({0}) <= date(\"{1}\")"),
     DATE_BETWEEN("Between", DataType.DATE, 3, "date({0}) >= date(\"{1}\") and date({0}) <= date(\"{2}\")"),
 
     // Generic Operators
     IS_NULL("IsNull", DataType.ANY, 1, "{0} = null"),
     IS_NOT_NULL("IsNotNull", DataType.ANY, 1, "{0} != null"),
     EXISTS("Exists", DataType.ANY, 1, "{0} != null"),
-            NOT("Not", DataType.ANY, 1, "not({0})"),
-    LIST_CONTAINS("ListContains", DataType.ANY, 2, "list contains({0}, {1})");
+    NOT("Not", DataType.ANY, 1, "not({0})"),
+            LIST_CONTAINS("ListContains", DataType.ANY, 2, "list contains({0}, {1})");
 
     public enum DataType {
         STRING, NUMBER, DATE, BOOLEAN, ANY;
@@ -134,10 +134,19 @@ public enum FeelTemplate {
 
     /**
      * Apply with list of values (correctly quoted/formatted).
+     * <p>
+     * Automatically handles String case-insensitivity if DataType is STRING.
      */
     public String applyWithList(String field, Object... values) {
         Objects.requireNonNull(field, "field must not be null");
         validateNotEmpty(values, "values");
+        
+        if (this.dataType == DataType.STRING) {
+            String[] stringValues = Arrays.stream(values)
+                .map(Object::toString)
+                .toArray(String[]::new);
+            return applyWithStringList(field, stringValues);
+        }
         
         String list = Arrays.stream(values)
             .map(this::formatListValue)

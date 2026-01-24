@@ -24,11 +24,8 @@ public final class FeelExpressionBuilder {
         FeelTemplate template = FeelTemplate.forOperator(op, type);
 
         return switch (op) {
-            // List operators need special handling
-            case "In" -> isString(type)
-                    ? template.applyWithStringList(field, c.values().toArray(String[]::new))
-                    : template.applyWithList(field, c.values().toArray());
-            case "NotIn" -> template.applyWithList(field, c.values().toArray());
+            // List operators
+            case "In", "NotIn" -> template.applyWithList(field, c.values().toArray());
 
             // Range operator needs 3 args
             case "Between" -> template.apply(field, c.firstValue(), c.secondValue());
@@ -41,9 +38,7 @@ public final class FeelExpressionBuilder {
         };
     }
 
-    private static boolean isString(String type) {
-        return type == null || "string".equalsIgnoreCase(type);
-    }
+
 
     private static Object getValue(RuleCondition c) {
         String val = c.firstValue();
