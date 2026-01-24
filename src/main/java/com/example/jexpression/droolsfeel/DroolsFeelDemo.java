@@ -1,59 +1,70 @@
 package com.example.jexpression.droolsfeel;
 
-import com.example.jexpression.droolsfeel.converter.RuleConverter;
+import com.example.jexpression.droolsfeel.model.EvaluationResult;
 import com.example.jexpression.droolsfeel.model.FeelRule;
-import com.example.jexpression.droolsfeel.model.ValidationRule;
 import com.example.jexpression.model.Transaction;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 
 /**
- * Demo: Load JSON → Convert to FEEL → Pass DTO → Get Results
+ * Production FEEL Rule Engine Demo.
+ * 
+ * <p>
+ * Demonstrates: Load → Compile → Evaluate → Results
  */
 @Component
 public class DroolsFeelDemo {
 
-    private final FeelRuleEngine engine;
-    private final RuleConverter converter;
-    private final ObjectMapper mapper;
+    private static final String RULES_PATH = "feel-raw-input.json";
 
-    public DroolsFeelDemo(FeelRuleEngine engine, RuleConverter converter, ObjectMapper mapper) {
+    private final RuleLoadingService ruleLoadingService;
+    private final FeelRuleEngine engine;
+
+    public DroolsFeelDemo(RuleLoadingService ruleLoadingService, FeelRuleEngine engine) {
+        this.ruleLoadingService = ruleLoadingService;
         this.engine = engine;
-        this.converter = converter;
-        this.mapper = mapper;
     }
 
-    public void run() throws Exception {
-        System.out.println("\n=== FEEL Rule Engine (Final) ===\n");
+    public void run() {
+        printHeader();
 
-        // ========================================
-        // STEP 1: Load JSON rules
-        // ========================================
-        System.out.println("Step 1: Loading JSON rules...");
-        var input = new ClassPathResource("feel-raw-input.json").getInputStream();
-        var wrapper = mapper.readValue(input, new TypeReference<Map<String, List<ValidationRule>>>() {
-        });
-        List<ValidationRule> rawRules = wrapper.get("rules");
-        System.out.println("  Loaded: " + rawRules.size() + " rules\n");
+        // ══════════════════════════════════════════════════════════════
+        // STEP 1: Load and compile rules
+        // ══════════════════════════════════════════════════════════════
+        printStep(1, "Loading rules from JSON");
+        List<FeelRule> rules = ruleLoadingService.loadFromClasspath(RULES_PATH);
+        printRules(rules);
 
-        // ========================================
-        // STEP 2: Convert to FEEL (combined expressions)
-        // ========================================
-        System.out.println("Step 2: Converting to FEEL expressions...");
-        List<FeelRule> feelRules = converter.convert(rawRules);
+        // ══════════════════════════════════════════════════════════════
+        // STEP 2: Create test transaction
+        // ══════════════════════════════════════════════════════════════
+        printStep(2, "Creating Transaction DTO");
+        Transaction tx = createTestTransaction();
+        printTransaction(tx);
 
-        feelRules.forEach(rule -> System.out.println("  " + rule.code() + ": " + rule.expression()));
-        System.out.println();
+        // ══════════════════════════════════════════════════════════════
+        // STEP 3: Evaluate rules
+        // ══════════════════════════════════════════════════════════════
+        printStep(3, "Evaluating rules against transaction");
+        List<EvaluationResult> results = engine.evaluate(rules, tx, "transaction");
+        printResults(results);
 
-        // ========================================
-        // STEP 3: Create Transaction DTO
-        // ========================================
-        System.out.println("Step 3: Creating Transaction DTO...");
+        // ══════════════════════════════════════════════════════════════
+        // STEP 4: Quick API demo
+        // ══════════════════════════════════════════════════════════════
+        printStep(4, "Quick API - Get failed codes");
+        List<String> failedCodes = engine.getFailedCodes(rules, tx, "transaction");
+        printFailedCodes(failedCodes);
+
+        printFooter();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Test Data
+    // ─────────────────────────────────────────────────────────────
+
+    private Transaction createTestTransaction() {
         Transaction tx = new Transaction();
         tx.setAmount(50.0);
         tx.setMessageType("pain.001");
@@ -62,24 +73,86 @@ public class DroolsFeelDemo {
         tx.setRequestedExecutionDate("2025-11-15");
         tx.setCountry("SA");
         tx.setChannel("SWIFT");
+        return tx;
+    }
 
-        System.out.println("  Transaction: amount=" + tx.getAmount() +
-                ", messageType=" + tx.getMessageType() +
-                ", country=" + tx.getCountry() + "\n");
+    // ─────────────────────────────────────────────────────────────
+    // Pretty Printing
+    // ─────────────────────────────────────────────────────────────
 
-        // ========================================
-        // STEP 4: Evaluate (pass FEEL rules + Transaction DTO)
-        // ========================================
-        System.out.println("Step 4: Evaluating rules against Transaction DTO...");
-        List<String> failures = engine.validate(feelRules, tx, "transaction");
+    private void printHeader() {
+        System.out.println();
+        System.out.println("╔══════════════════════════════════════════════════════════════╗");
+        System.out.println("║           DROOLS FEEL RULE ENGINE - PRODUCTION DEMO          ║");
+        System.out.println("╚══════════════════════════════════════════════════════════════╝");
+        System.out.println();
+    }
 
-        if (failures.isEmpty()) {
-            System.out.println("  ✓ All validations PASSED");
-        } else {
-            System.out.println("  Failed rules:");
-            failures.forEach(code -> System.out.println("    ✗ " + code));
+    private void printFooter() {
+        System.out.println();
+        System.out.println("╔══════════════════════════════════════════════════════════════╗");
+        System.out.println("║                       DEMO COMPLETE                          ║");
+        System.out.println("╚══════════════════════════════════════════════════════════════╝");
+        System.out.println();
+    }
+
+    private void printStep(int num, String title) {
+        System.out.println();
+        System.out.printf("▶ STEP %d: %s%n", num, title);
+        System.out.println("─".repeat(60));
+    }
+
+    private void printRules(List<FeelRule> rules) {
+        long valid = rules.stream().filter(FeelRule::isValid).count();
+        System.out.printf("  Loaded: %d rules (%d valid)%n%n", rules.size(), valid);
+
+        for (FeelRule rule : rules) {
+            String status = rule.isValid() ? "✓" : "✗";
+            System.out.printf("  [%s] %-20s │ %s%n",
+                    status, rule.code(), truncate(rule.expression(), 40));
+        }
+    }
+
+    private void printTransaction(Transaction tx) {
+        System.out.println("  {");
+        System.out.printf("    amount         : %.2f%n", tx.getAmount());
+        System.out.printf("    messageType    : %s%n", tx.getMessageType());
+        System.out.printf("    country        : %s%n", tx.getCountry());
+        System.out.printf("    purposeCode    : %s%n", tx.getPurposeCode());
+        System.out.printf("    executionDate  : %s%n", tx.getRequestedExecutionDate());
+        System.out.printf("    beneficiaryIban: %s%n", tx.getBeneficiaryIban());
+        System.out.println("  }");
+    }
+
+    private void printResults(List<EvaluationResult> results) {
+        for (EvaluationResult r : results) {
+            String status = switch (r.status()) {
+                case PASSED -> "✓ PASS";
+                case FAILED -> "✗ FAIL";
+                case ERROR -> "⚠ ERR ";
+                case SKIPPED -> "○ SKIP";
+            };
+            System.out.printf("  [%s] %-20s (%.2fms)%n",
+                    status, r.ruleCode(), r.evaluationTimeMs());
         }
 
-        System.out.println("\n=== Demo Complete ===\n");
+        System.out.println();
+        long passed = results.stream().filter(EvaluationResult::passed).count();
+        long failed = results.stream().filter(EvaluationResult::failed).count();
+        System.out.printf("  Summary: %d passed, %d failed%n", passed, failed);
+    }
+
+    private void printFailedCodes(List<String> codes) {
+        if (codes.isEmpty()) {
+            System.out.println("  ✓ All validations PASSED");
+        } else {
+            System.out.println("  ✗ Failed rules: " + codes);
+        }
+    }
+
+    private String truncate(String str, int max) {
+        if (str == null)
+            return "null";
+        return str.length() <= max ? str : str.substring(0, max) + "…";
     }
 }
