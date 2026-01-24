@@ -1,5 +1,6 @@
 package com.example.jexpression.droolsfeel.converter;
 
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -147,6 +148,7 @@ public enum FeelTemplate {
 
     /**
      * Apply values to template with validation.
+     * Uses MessageFormat for efficient substitution.
      * 
      * @param args Values to fill in: {0}, {1}, {2}...
      * @return Complete FEEL expression
@@ -155,13 +157,11 @@ public enum FeelTemplate {
     public String apply(Object... args) {
         validateArgCount(args.length);
 
-        String result = pattern;
-        for (int i = 0; i < args.length; i++) {
-            String placeholder = "{" + i + "}";
-            String value = formatValue(args[i]);
-            result = result.replace(placeholder, value);
-        }
-        return result;
+        Object[] formatted = Arrays.stream(args)
+                .map(this::formatValue)
+                .toArray();
+
+        return MessageFormat.format(pattern, formatted);
     }
 
     /**
