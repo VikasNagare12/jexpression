@@ -3,21 +3,20 @@ package com.example.jexpression.droolsfeel.model;
 import java.util.List;
 
 /**
- * Single validation condition within a rule.
+ * Single condition within a rule.
  * 
  * @param field  Field path (e.g., "transaction.amount")
- * @param type   Data type: "string", "number", "date", "boolean", "list"
+ * @param type   Data type: "string", "number", "date", "boolean"
  * @param op     Operator name (e.g., "Equals", "GreaterOrEqual")
  * @param source Value source: "static", "prdm", "config"
  * @param values Comparison values
  */
-public record Validation(
-    String field,
-    String type,
-    String op,
-    String source,
-    List<String> values
-) {
+public record Condition(
+        String field,
+        String type,
+        String op,
+        String source,
+        List<String> values) {
 
     /**
      * Get the operator enum.

@@ -1,7 +1,7 @@
 package com.example.jexpression.droolsfeel.converter;
 
 import com.example.jexpression.droolsfeel.model.FeelRule;
-import com.example.jexpression.droolsfeel.model.ValidationRule;
+import com.example.jexpression.droolsfeel.model.RuleDefinition;
 import org.kie.dmn.feel.FEEL;
 import org.kie.dmn.feel.lang.CompiledExpression;
 import org.slf4j.Logger;
@@ -12,14 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Converts raw validation rules to compiled FEEL rules.
- * 
- * <p>
- * Expressions are compiled at load time for:
- * <ul>
- * <li>Fail-fast syntax validation</li>
- * <li>~2-5x faster repeated evaluations</li>
- * </ul>
+ * Converts rule definitions to compiled FEEL rules.
  */
 @Component
 public class RuleConverter {
@@ -29,42 +22,37 @@ public class RuleConverter {
     private final FEEL feel = FEEL.newInstance();
 
     /**
-     * Convert raw rules to compiled FEEL rules.
-     * Filters disabled rules automatically.
+     * Convert rule definitions to compiled FEEL rules.
      */
-    public List<FeelRule> convert(List<ValidationRule> rawRules) {
-        log.info("Converting {} raw rules to FEEL", rawRules.size());
+    public List<FeelRule> convert(List<RuleDefinition> definitions) {
+        log.info("Converting {} rule definitions to FEEL", definitions.size());
 
-        List<FeelRule> rules = rawRules.stream()
-                .filter(ValidationRule::isEnabled)
-                .filter(ValidationRule::hasValidations)
+        List<FeelRule> rules = definitions.stream()
+                .filter(RuleDefinition::isEnabled)
+                .filter(RuleDefinition::hasConditions)
                 .map(this::toFeelRule)
                 .toList();
 
         long valid = rules.stream().filter(FeelRule::isValid).count();
-        long invalid = rules.size() - valid;
-
         log.info("Conversion complete: {} rules ({} valid, {} invalid)",
-                rules.size(), valid, invalid);
+                rules.size(), valid, rules.size() - valid);
 
         return rules;
     }
 
-    private FeelRule toFeelRule(ValidationRule raw) {
-        // Build combined FEEL expression from validations
-        String expression = raw.validations().stream()
+    private FeelRule toFeelRule(RuleDefinition def) {
+        String expression = def.conditions().stream()
                 .map(FeelExpressionBuilder::toFeel)
                 .collect(Collectors.joining(" and "));
 
-        // Compile expression
-        CompiledExpression compiled = compileExpression(raw.code(), expression);
+        CompiledExpression compiled = compileExpression(def.code(), expression);
 
         if (compiled != null) {
-            log.debug("Rule [{}] compiled: {}", raw.code(), expression);
-            return FeelRule.valid(raw.code(), raw.name(), expression, compiled);
+            log.debug("Rule [{}] compiled: {}", def.code(), expression);
+            return FeelRule.valid(def.code(), def.name(), expression, compiled);
         } else {
-            log.error("Rule [{}] FAILED to compile: {}", raw.code(), expression);
-            return FeelRule.invalid(raw.code(), raw.name(), expression);
+            log.error("Rule [{}] FAILED to compile: {}", def.code(), expression);
+            return FeelRule.invalid(def.code(), def.name(), expression);
         }
     }
 

@@ -2,7 +2,7 @@ package com.example.jexpression.droolsfeel;
 
 import com.example.jexpression.droolsfeel.converter.RuleConverter;
 import com.example.jexpression.droolsfeel.model.FeelRule;
-import com.example.jexpression.droolsfeel.model.ValidationRule;
+import com.example.jexpression.droolsfeel.model.RuleDefinition;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -18,18 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Service for loading and compiling validation rules.
- * 
- * <p>
- * Supports loading from:
- * <ul>
- * <li>Classpath resources</li>
- * <li>File system paths</li>
- * <li>JSON strings</li>
- * </ul>
- * 
- * <p>
- * Rules are compiled at load time for fail-fast validation.
+ * Service for loading and compiling rules.
  */
 @Service
 public class RuleLoadingService {
@@ -44,17 +33,8 @@ public class RuleLoadingService {
         this.ruleConverter = ruleConverter;
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Public API
-    // ─────────────────────────────────────────────────────────────
-
     /**
      * Load rules from classpath resource.
-     * 
-     * @param resourcePath Path relative to classpath (e.g.,
-     *                     "rules/validation.json")
-     * @return List of compiled FEEL rules
-     * @throws RuleLoadingException if loading fails
      */
     public List<FeelRule> loadFromClasspath(String resourcePath) {
         log.info("Loading rules from classpath: {}", resourcePath);
@@ -86,8 +66,8 @@ public class RuleLoadingService {
         log.info("Loading rules from JSON string ({} chars)", jsonContent.length());
 
         try {
-            List<ValidationRule> rawRules = parseJsonString(jsonContent);
-            return ruleConverter.convert(rawRules);
+            List<RuleDefinition> definitions = parseJsonString(jsonContent);
+            return ruleConverter.convert(definitions);
         } catch (IOException e) {
             throw new RuleLoadingException("Failed to parse JSON content", e);
         }
@@ -97,42 +77,36 @@ public class RuleLoadingService {
      * Load rules from input stream.
      */
     public List<FeelRule> loadFromStream(InputStream input) throws IOException {
-        List<ValidationRule> rawRules = parseStream(input);
-        return ruleConverter.convert(rawRules);
+        List<RuleDefinition> definitions = parseStream(input);
+        return ruleConverter.convert(definitions);
     }
 
     // ─────────────────────────────────────────────────────────────
     // Parsing
     // ─────────────────────────────────────────────────────────────
 
-    private List<ValidationRule> parseStream(InputStream input) throws IOException {
-        Map<String, List<ValidationRule>> wrapper = objectMapper.readValue(
-                input,
-                new TypeReference<Map<String, List<ValidationRule>>>() {
+    private List<RuleDefinition> parseStream(InputStream input) throws IOException {
+        Map<String, List<RuleDefinition>> wrapper = objectMapper.readValue(
+                input, new TypeReference<>() {
                 });
         return extractRules(wrapper);
     }
 
-    private List<ValidationRule> parseJsonString(String json) throws IOException {
-        Map<String, List<ValidationRule>> wrapper = objectMapper.readValue(
-                json,
-                new TypeReference<Map<String, List<ValidationRule>>>() {
+    private List<RuleDefinition> parseJsonString(String json) throws IOException {
+        Map<String, List<RuleDefinition>> wrapper = objectMapper.readValue(
+                json, new TypeReference<>() {
                 });
         return extractRules(wrapper);
     }
 
-    private List<ValidationRule> extractRules(Map<String, List<ValidationRule>> wrapper) {
-        List<ValidationRule> rules = wrapper.get("rules");
+    private List<RuleDefinition> extractRules(Map<String, List<RuleDefinition>> wrapper) {
+        List<RuleDefinition> rules = wrapper.get("rules");
         if (rules == null) {
             throw new RuleLoadingException("JSON must contain 'rules' array");
         }
-        log.debug("Parsed {} raw rules", rules.size());
+        log.debug("Parsed {} rule definitions", rules.size());
         return rules;
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // Exception
-    // ─────────────────────────────────────────────────────────────
 
     /**
      * Exception thrown when rule loading fails.
