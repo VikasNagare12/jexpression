@@ -24,13 +24,13 @@ public final class FeelExpressionBuilder {
         FeelTemplate template = FeelTemplate.forOperator(op, type);
 
         return switch (op) {
-            // List operators
-            case "In", "NotIn" -> template.applyWithList(field, c.values().toArray());
+            // List operators: pass the list of values directly
+            case "In", "NotIn" -> template.apply(field, c.values());
 
-            // Range operator needs 3 args
+            // Range operator: pass min and max
             case "Between" -> template.apply(field, c.firstValue(), c.secondValue());
 
-            // Null checks need only field
+            // Null checks: only field
             case "Exists", "IsNotNull", "IsNull" -> template.apply(field);
 
             // Standard 2-arg operators

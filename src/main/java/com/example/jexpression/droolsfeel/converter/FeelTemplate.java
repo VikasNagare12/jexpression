@@ -3,7 +3,6 @@ package com.example.jexpression.droolsfeel.converter;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -34,28 +33,31 @@ public enum FeelTemplate {
     NOT_IN_LIST("NotIn", DataType.NUMBER, 2, "not({0} in [{1}])"),
 
     // String Operators (case-insensitive)
-    STRING_EQUALS("Equals", DataType.STRING, 2, "lower case({0}) = lower case(\"{1}\")"),
-    STRING_NOT_EQUALS("NotEquals", DataType.STRING, 2, "lower case({0}) != lower case(\"{1}\")"),
+    // Note: {1} is NOT quoted in template because formatValue adds quotes for
+    // Strings.
+            STRING_EQUALS("Equals", DataType.STRING, 2, "lower case({0}) = {1}"),
+    STRING_NOT_EQUALS("NotEquals", DataType.STRING, 2, "lower case({0}) != {1}"),
     STRING_IN_LIST("In", DataType.STRING, 2, "lower case({0}) in [{1}]"),
-    CONTAINS("Contains", DataType.STRING, 2, "contains(lower case({0}), lower case(\"{1}\"))"),
-    STARTS_WITH("StartsWith", DataType.STRING, 2, "starts with(lower case({0}), lower case(\"{1}\"))"),
-    ENDS_WITH("EndsWith", DataType.STRING, 2, "ends with(lower case({0}), lower case(\"{1}\"))"),
-    MATCHES("Matches", DataType.STRING, 2, "matches({0}, \"{1}\", \"i\")"),
+    CONTAINS("Contains", DataType.STRING, 2, "contains(lower case({0}), {1})"),
+            STARTS_WITH("StartsWith", DataType.STRING, 2, "starts with(lower case({0}), {1})"),
+    ENDS_WITH("EndsWith", DataType.STRING, 2, "ends with(lower case({0}), {1})"),
+    MATCHES("Matches", DataType.STRING, 2, "matches({0}, {1}, \"i\")"),
 
     // Date Operators
-    DATE_EQUALS("Equals", DataType.DATE, 2, "date({0}) = date(\"{1}\")"),
-    DATE_GREATER_THAN("Greater", DataType.DATE, 2, "date({0}) > date(\"{1}\")"),
-    DATE_GREATER_OR_EQUAL("GreaterOrEqual", DataType.DATE, 2, "date({0}) >= date(\"{1}\")"),
-    DATE_LESS_THAN("Less", DataType.DATE, 2, "date({0}) < date(\"{1}\")"),
-            DATE_LESS_OR_EQUAL("LessOrEqual", DataType.DATE, 2, "date({0}) <= date(\"{1}\")"),
-    DATE_BETWEEN("Between", DataType.DATE, 3, "date({0}) >= date(\"{1}\") and date({0}) <= date(\"{2}\")"),
+    // Note: Date strings must be quoted, handled by formatValue.
+            DATE_EQUALS("Equals", DataType.DATE, 2, "date({0}) = date({1})"),
+    DATE_GREATER_THAN("Greater", DataType.DATE, 2, "date({0}) > date({1})"),
+    DATE_GREATER_OR_EQUAL("GreaterOrEqual", DataType.DATE, 2, "date({0}) >= date({1})"),
+    DATE_LESS_THAN("Less", DataType.DATE, 2, "date({0}) < date({1})"),
+    DATE_LESS_OR_EQUAL("LessOrEqual", DataType.DATE, 2, "date({0}) <= date({1})"),
+    DATE_BETWEEN("Between", DataType.DATE, 3, "date({0}) >= date({1}) and date({0}) <= date({2})"),
 
     // Generic Operators
     IS_NULL("IsNull", DataType.ANY, 1, "{0} = null"),
     IS_NOT_NULL("IsNotNull", DataType.ANY, 1, "{0} != null"),
     EXISTS("Exists", DataType.ANY, 1, "{0} != null"),
     NOT("Not", DataType.ANY, 1, "not({0})"),
-            LIST_CONTAINS("ListContains", DataType.ANY, 2, "list contains({0}, {1})");
+    LIST_CONTAINS("ListContains", DataType.ANY, 2, "list contains({0}, {1})");
 
     public enum DataType {
         STRING, NUMBER, DATE, BOOLEAN, ANY;
@@ -96,16 +98,10 @@ public enum FeelTemplate {
                 ));
     }
 
-    /**
-     * Find template by operator and data type.
-     */
     public static FeelTemplate forOperator(String operator, String type) {
         return forOperator(operator, DataType.fromString(type));
     }
 
-    /**
-     * Find template by operator and data type.
-     */
     public static FeelTemplate forOperator(String operator, DataType type) {
         String key = operator + ":" + type.name();
         FeelTemplate template = LOOKUP.get(key);
@@ -122,52 +118,43 @@ public enum FeelTemplate {
     }
 
     /**
-     * Apply values to template with validation.
+     * Apply values to template.
+     * <p>
+     * Handles variable arguments. Arg 0 is treated as the Field Name (raw).
+     * Subsequent args are treated as Values and formatted (escaped, lowercased,
+     * etc).
      */
     public String apply(Object... args) {
         validateArgCount(args.length);
-        Object[] formatted = Arrays.stream(args)
-                .map(this::formatValue)
-                .toArray();
+
+        Object[] formatted = new Object[args.length];
+        
+        // Arg 0 is the Field Name - pass raw (not formatted/quoted)
+        formatted[0] = args[0];
+        
+        // Arg 1..N are Values - format them
+        for (int i = 1; i < args.length; i++) {
+            formatted[i] = formatValue(args[i]);
+        }
+
         return MessageFormat.format(pattern, formatted);
     }
 
-    /**
-     * Apply with list of values (correctly quoted/formatted).
-     * <p>
-     * Automatically handles String case-insensitivity if DataType is STRING.
-     */
-    public String applyWithList(String field, Object... values) {
-        Objects.requireNonNull(field, "field must not be null");
-        validateNotEmpty(values, "values");
-        
-        if (this.dataType == DataType.STRING) {
-            String[] stringValues = Arrays.stream(values)
-                .map(Object::toString)
-                .toArray(String[]::new);
-            return applyWithStringList(field, stringValues);
-        }
-        
-        String list = Arrays.stream(values)
-            .map(this::formatListValue)
-            .collect(Collectors.joining(", "));
-        return MessageFormat.format(pattern, formatValue(field), list);
+    public String getOperator() {
+        return operator;
     }
 
-    /**
-     * Apply with case-insensitive string list.
-     */
-    public String applyWithStringList(String field, String... values) {
-        Objects.requireNonNull(field, "field must not be null");
-        validateNotEmpty(values, "values");
-        
-        String list = Arrays.stream(values)
-            .map(v -> "lower case(\"" + escape(v) + "\")")
-            .collect(Collectors.joining(", "));
-        return MessageFormat.format(pattern, formatValue(field), list);
+    public DataType getDataType() {
+        return dataType;
     }
 
-    // Unused methods removed: and(), or(), getters...
+    public int getArgCount() {
+        return argCount;
+    }
+
+    public String getPattern() {
+        return pattern;
+    }
 
     private void validateArgCount(int actual) {
         if (actual != argCount) {
@@ -176,24 +163,42 @@ public enum FeelTemplate {
         }
     }
 
-    private static void validateNotEmpty(Object[] arr, String name) {
-        if (arr == null || arr.length == 0) {
-            throw new IllegalArgumentException(name + " must not be empty");
-        }
-    }
 
+
+    /**
+     * Formats a value for FEEL.
+     * - Collections/Arrays -> Joined by comma
+     * - Strings -> Quoted and Escaped (and lowercased if STRING type)
+     * - Numbers/Booleans -> Raw
+     */
     private String formatValue(Object value) {
         if (value == null) return "null";
-        if (value instanceof Number) return value.toString();
-        if (value instanceof Boolean) return value.toString();
-        return escape(value.toString());
-    }
 
-    private String formatListValue(Object value) {
-        if (value == null) return "null";
+        // Handle Collections (Recursively format items)
+        if (value instanceof java.util.Collection<?> col) {
+            return col.stream()
+                    .map(this::formatValue)
+                    .collect(Collectors.joining(", "));
+        }
+        // Handle Arrays
+        if (value.getClass().isArray()) {
+            return Arrays.stream((Object[]) value)
+                    .map(this::formatValue)
+                    .collect(Collectors.joining(", "));
+        }
+
         if (value instanceof Number) return value.toString();
         if (value instanceof Boolean) return value.toString();
-        return "\"" + escape(value.toString()) + "\"";
+
+        String s = value.toString();
+
+        // Auto-lowercase for case-insensitive STRING comparisons
+        if (this.dataType == DataType.STRING) {
+            s = s.toLowerCase();
+        }
+
+        // Always quote strings
+        return "\"" + escape(s) + "\"";
     }
 
     private static String escape(String value) {
