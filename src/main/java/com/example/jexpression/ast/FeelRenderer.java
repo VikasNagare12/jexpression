@@ -1,4 +1,4 @@
-package com.example.jexpression.droolsfeel.ast;
+package com.example.jexpression.ast;
 
 import java.util.stream.Collectors;
 

@@ -1,4 +1,4 @@
-package com.example.jexpression.droolsfeel.model;
+package com.example.jexpression.model;
 
 import java.util.List;
 
@@ -11,16 +11,15 @@ import java.util.List;
  * @param conditions List of conditions to evaluate
  */
 public record RuleDefinition(
-    String code,
-    String name,
-    String status,
-    List<RuleCondition> conditions
-) {
-    
+        String code,
+        String name,
+        String status,
+        List<RuleCondition> conditions) {
+
     public boolean isEnabled() {
         return "Enabled".equalsIgnoreCase(status);
     }
-    
+
     public boolean hasConditions() {
         return conditions != null && !conditions.isEmpty();
     }

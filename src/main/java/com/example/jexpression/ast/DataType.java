@@ -1,10 +1,11 @@
-package com.example.jexpression.droolsfeel.ast;
+package com.example.jexpression.ast;
 
 public enum DataType {
     STRING, NUMBER, BOOLEAN, DATE, ANY;
 
     public Object parse(String v) {
-        if (v == null) return null;
+        if (v == null)
+            return null;
         return switch (this) {
             case NUMBER -> {
                 try {

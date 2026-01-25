@@ -1,4 +1,4 @@
-package com.example.jexpression.droolsfeel.model;
+package com.example.jexpression.model;
 
 import java.util.List;
 

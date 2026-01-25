@@ -1,7 +1,7 @@
-package com.example.jexpression.droolsfeel.service;
+package com.example.jexpression.service;
 
-import com.example.jexpression.droolsfeel.model.FeelRule;
-import com.example.jexpression.droolsfeel.model.RuleDefinition;
+import com.example.jexpression.model.FeelRule;
+import com.example.jexpression.model.RuleDefinition;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;

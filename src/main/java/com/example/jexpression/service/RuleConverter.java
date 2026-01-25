@@ -1,8 +1,8 @@
-package com.example.jexpression.droolsfeel.service;
+package com.example.jexpression.service;
 
-import com.example.jexpression.droolsfeel.mapper.RuleConditionMapper;
-import com.example.jexpression.droolsfeel.model.FeelRule;
-import com.example.jexpression.droolsfeel.model.RuleDefinition;
+import com.example.jexpression.mapper.RuleConditionMapper;
+import com.example.jexpression.model.FeelRule;
+import com.example.jexpression.model.RuleDefinition;
 import org.kie.dmn.feel.FEEL;
 import org.kie.dmn.feel.lang.CompiledExpression;
 import org.slf4j.Logger;

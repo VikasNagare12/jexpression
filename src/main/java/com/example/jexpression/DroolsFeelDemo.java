@@ -1,9 +1,9 @@
-package com.example.jexpression.droolsfeel;
+package com.example.jexpression;
 
-import com.example.jexpression.droolsfeel.model.EvaluationResult;
-import com.example.jexpression.droolsfeel.model.FeelRule;
-import com.example.jexpression.droolsfeel.service.FeelRuleEngine;
-import com.example.jexpression.droolsfeel.service.RuleLoadingService;
+import com.example.jexpression.model.EvaluationResult;
+import com.example.jexpression.model.FeelRule;
+import com.example.jexpression.service.FeelRuleEngine;
+import com.example.jexpression.service.RuleLoadingService;
 import com.example.jexpression.model.Transaction;
 import org.springframework.stereotype.Component;
 

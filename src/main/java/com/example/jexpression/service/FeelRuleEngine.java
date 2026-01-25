@@ -1,7 +1,7 @@
-package com.example.jexpression.droolsfeel.service;
+package com.example.jexpression.service;
 
-import com.example.jexpression.droolsfeel.model.EvaluationResult;
-import com.example.jexpression.droolsfeel.model.FeelRule;
+import com.example.jexpression.model.EvaluationResult;
+import com.example.jexpression.model.FeelRule;
 import org.apache.commons.lang3.Validate;
 import org.kie.dmn.feel.FEEL;
 import org.slf4j.Logger;

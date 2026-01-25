@@ -1,10 +1,10 @@
-package com.example.jexpression.droolsfeel.mapper;
+package com.example.jexpression.mapper;
 
-import com.example.jexpression.droolsfeel.ast.DataType;
-import com.example.jexpression.droolsfeel.ast.FeelAst;
-import com.example.jexpression.droolsfeel.ast.FeelNode;
-import com.example.jexpression.droolsfeel.ast.FeelRenderer;
-import com.example.jexpression.droolsfeel.model.RuleCondition;
+import com.example.jexpression.ast.DataType;
+import com.example.jexpression.ast.FeelAst;
+import com.example.jexpression.ast.FeelNode;
+import com.example.jexpression.ast.FeelRenderer;
+import com.example.jexpression.model.RuleCondition;
 
 import java.util.List;
 
