@@ -10,7 +10,9 @@ import java.util.stream.Stream;
 /**
  * Production-ready FEEL expression templates with type-based lookup.
  * 
- * <p>Usage:
+ * <p>
+ * Usage:
+ * 
  * <pre>
  * // Direct usage
  * FeelTemplate.STRING_EQUALS.apply("country", "SA")
@@ -18,7 +20,10 @@ import java.util.stream.Stream;
  * // Auto-lookup by operator and type
  * FeelTemplate.forOperator("Equals", DataType.STRING).apply("country", "SA")
  * </pre>
+ *
+ * @deprecated Use the AST-based approach (FeelAst, FeelNode) instead.
  */
+@Deprecated
 public enum FeelTemplate {
 
     // Comparators

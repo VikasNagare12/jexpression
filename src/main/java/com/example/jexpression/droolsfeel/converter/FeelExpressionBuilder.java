@@ -8,7 +8,10 @@ import com.example.jexpression.droolsfeel.model.RuleCondition;
  * <p>
  * Uses {@link FeelTemplate#forOperator(String, String)} for automatic template
  * selection.
+ *
+ * @deprecated Use FeelAstExpressionBuilder instead.
  */
+@Deprecated
 public final class FeelExpressionBuilder {
 
     private FeelExpressionBuilder() {}
