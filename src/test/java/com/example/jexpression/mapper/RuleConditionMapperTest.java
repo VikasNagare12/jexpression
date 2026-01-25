@@ -15,7 +15,7 @@ class RuleConditionMapperTest {
         RuleCondition c = new RuleCondition("amount", "number", "Equals", "static", Collections.singletonList("100"));
         String result = RuleConditionMapper.toFeel(c);
         // AST renders doubles as doubles
-        assertEquals("amount = 100.0", result);
+        assertEquals("amount = 100", result);
     }
 
     @Test
@@ -38,7 +38,7 @@ class RuleConditionMapperTest {
         RuleCondition c = new RuleCondition("age", "number", "Between", "static", Arrays.asList("18", "65"));
         String result = RuleConditionMapper.toFeel(c);
         // AST renders: age >= 18.0 and age <= 65.0
-        assertEquals("age >= 18.0 and age <= 65.0", result);
+        assertEquals("age >= 18 and age <= 65", result);
     }
 
     @Test

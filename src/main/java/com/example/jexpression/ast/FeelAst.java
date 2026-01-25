@@ -20,7 +20,7 @@ public final class FeelAst {
             return new ListNode(List.of());
         return new ListNode(
                 values.stream()
-                        .map(v -> new LiteralNode(t.parse(v), t))
+                        .map(v -> new LiteralNode(v, t))
                         .toList());
     }
 

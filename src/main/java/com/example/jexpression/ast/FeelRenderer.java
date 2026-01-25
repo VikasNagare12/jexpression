@@ -22,13 +22,17 @@ public final class FeelRenderer implements FeelVisitor<String> {
 
         if (v == null)
             return "null";
-        if (v instanceof Number || v instanceof Boolean)
+
+        // If type is explicitly NUMBER or BOOLEAN, render raw value
+        if (node.type() == DataType.NUMBER || node.type() == DataType.BOOLEAN) {
             return v.toString();
+        }
 
         if (node.type() == DataType.DATE) {
             return "date(\"" + v + "\")";
         }
 
+        // Default to String: Quote and escape
         return "\"" + escape(v.toString()) + "\"";
     }
 
