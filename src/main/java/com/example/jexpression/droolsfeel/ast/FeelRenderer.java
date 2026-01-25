@@ -46,10 +46,7 @@ public final class FeelRenderer implements FeelVisitor<String> {
 
     @Override
     public String visit(BinaryNode node) {
-        if (node.operator() == FeelOperator.CONTAINS
-                || node.operator() == FeelOperator.STARTS_WITH
-                || node.operator() == FeelOperator.ENDS_WITH) {
-
+        if (node.operator().isFunction()) {
             return node.operator().feel() + "(" +
                     node.left().accept(this) + ", " +
                     node.right().accept(this) + ")";
