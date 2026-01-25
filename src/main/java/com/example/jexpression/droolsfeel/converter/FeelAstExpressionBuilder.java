@@ -51,31 +51,36 @@ public final class FeelAstExpressionBuilder {
     }
 
     private static FeelNode buildAstInternal(String op, DataType type, FeelNode fieldNode, List<String> values) {
-        return switch (op) {
-            case "Equals" -> FeelAst.eq(fieldNode, FeelAst.value(parse(first(values), type), type));
-            case "NotEquals" -> FeelAst.not(FeelAst.eq(fieldNode, FeelAst.value(parse(first(values), type), type)));
-            case "Greater" -> FeelAst.gt(fieldNode, FeelAst.value(parse(first(values), type), type));
-            case "GreaterOrEqual" -> FeelAst.gte(fieldNode, FeelAst.value(parse(first(values), type), type));
-            case "Less" -> FeelAst.lt(fieldNode, FeelAst.value(parse(first(values), type), type));
-            case "LessOrEqual" -> FeelAst.lte(fieldNode, FeelAst.value(parse(first(values), type), type));
+        InputOperator operator;
+        try {
+            operator = InputOperator.valueOf(op.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Unsupported operator: " + op);
+        }
 
-            case "Between" -> {
+        return switch (operator) {
+            case EQUALS -> FeelAst.eq(fieldNode, FeelAst.value(parse(first(values), type), type));
+            case NOTEQUALS -> FeelAst.not(FeelAst.eq(fieldNode, FeelAst.value(parse(first(values), type), type)));
+            case GREATER -> FeelAst.gt(fieldNode, FeelAst.value(parse(first(values), type), type));
+            case GREATEROREQUAL -> FeelAst.gte(fieldNode, FeelAst.value(parse(first(values), type), type));
+            case LESS -> FeelAst.lt(fieldNode, FeelAst.value(parse(first(values), type), type));
+            case LESSOREQUAL -> FeelAst.lte(fieldNode, FeelAst.value(parse(first(values), type), type));
+
+            case BETWEEN -> {
                 FeelNode val1 = FeelAst.value(parse(first(values), type), type);
                 FeelNode val2 = FeelAst.value(parse(second(values), type), type);
                 yield FeelAst.and(FeelAst.gte(fieldNode, val1), FeelAst.lte(fieldNode, val2));
             }
 
-            case "In" -> FeelAst.in(fieldNode, FeelAst.list(type, values));
-            case "NotIn" -> FeelAst.not(FeelAst.in(fieldNode, FeelAst.list(type, values)));
+            case IN -> FeelAst.in(fieldNode, FeelAst.list(type, values));
+            case NOTIN -> FeelAst.not(FeelAst.in(fieldNode, FeelAst.list(type, values)));
 
-            case "Contains" -> FeelAst.contains(fieldNode, FeelAst.value(parse(first(values), type), type));
-            case "StartsWith" -> FeelAst.startsWith(fieldNode, FeelAst.value(parse(first(values), type), type));
-            case "EndsWith" -> FeelAst.endsWith(fieldNode, FeelAst.value(parse(first(values), type), type));
+            case CONTAINS -> FeelAst.contains(fieldNode, FeelAst.value(parse(first(values), type), type));
+            case STARTSWITH -> FeelAst.startsWith(fieldNode, FeelAst.value(parse(first(values), type), type));
+            case ENDSWITH -> FeelAst.endsWith(fieldNode, FeelAst.value(parse(first(values), type), type));
 
-            case "IsNull" -> FeelAst.eq(fieldNode, FeelAst.value(null, type));
-            case "IsNotNull", "Exists" -> FeelAst.not(FeelAst.eq(fieldNode, FeelAst.value(null, type)));
-
-            default -> throw new IllegalArgumentException("Unsupported operator: " + op);
+            case ISNULL -> FeelAst.eq(fieldNode, FeelAst.value(null, type));
+            case ISNOTNULL, EXISTS -> FeelAst.not(FeelAst.eq(fieldNode, FeelAst.value(null, type)));
         };
     }
 
