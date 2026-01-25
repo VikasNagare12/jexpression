@@ -17,38 +17,7 @@ public final class FeelExpressionBuilder {
      * Convert RuleCondition to FEEL expression string.
      */
     public static String toFeel(RuleCondition c) {
-        String field = c.field();
-        String type = c.type();
-        String op = c.op();
-
-        FeelTemplate template = FeelTemplate.forOperator(op, type);
-
-        return switch (op) {
-            // List operators: pass the list of values directly
-            case "In", "NotIn" -> template.apply(field, c.values());
-
-            // Range operator: pass min and max
-            case "Between" -> template.apply(field, c.firstValue(), c.secondValue());
-
-            // Null checks: only field
-            case "Exists", "IsNotNull", "IsNull" -> template.apply(field);
-
-            // Standard 2-arg operators
-            default -> template.apply(field, getValue(c));
-        };
-    }
-
-
-
-    private static Object getValue(RuleCondition c) {
-        String val = c.firstValue();
-        if (val == null)
-            return null;
-
-        // Convert to number if type is number
-        if ("number".equalsIgnoreCase(c.type())) {
-            return Double.parseDouble(val);
-        }
-        return val;
+        FeelTemplate template = FeelTemplate.forOperator(c.op(), c.type());
+        return template.apply(c.field(), c.values());
     }
 }
