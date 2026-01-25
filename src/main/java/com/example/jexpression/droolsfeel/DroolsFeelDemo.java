@@ -2,6 +2,8 @@ package com.example.jexpression.droolsfeel;
 
 import com.example.jexpression.droolsfeel.model.EvaluationResult;
 import com.example.jexpression.droolsfeel.model.FeelRule;
+import com.example.jexpression.droolsfeel.service.FeelRuleEngine;
+import com.example.jexpression.droolsfeel.service.RuleLoadingService;
 import com.example.jexpression.model.Transaction;
 import org.springframework.stereotype.Component;
 

@@ -1,5 +1,6 @@
-package com.example.jexpression.droolsfeel.converter;
+package com.example.jexpression.droolsfeel.service;
 
+import com.example.jexpression.droolsfeel.mapper.RuleConditionMapper;
 import com.example.jexpression.droolsfeel.model.FeelRule;
 import com.example.jexpression.droolsfeel.model.RuleDefinition;
 import org.kie.dmn.feel.FEEL;
@@ -42,7 +43,7 @@ public class RuleConverter {
 
     private FeelRule toFeelRule(RuleDefinition def) {
         String expression = def.conditions().stream()
-                .map(FeelAstExpressionBuilder::toFeel)
+                .map(RuleConditionMapper::toFeel)
                 .collect(Collectors.joining(" and "));
 
         CompiledExpression compiled = compileExpression(def.code(), expression);

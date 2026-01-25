@@ -18,10 +18,6 @@ public record RuleCondition(
         String source,
         List<String> values) {
 
-    public FeelOperator operator() {
-        return FeelOperator.fromJsonName(op);
-    }
-
     public boolean isDate() {
         return "date".equalsIgnoreCase(type);
     }

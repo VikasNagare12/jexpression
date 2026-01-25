@@ -1,4 +1,4 @@
-package com.example.jexpression.droolsfeel.converter;
+package com.example.jexpression.droolsfeel.mapper;
 
 import com.example.jexpression.droolsfeel.ast.DataType;
 import com.example.jexpression.droolsfeel.ast.FeelAst;
@@ -8,9 +8,9 @@ import com.example.jexpression.droolsfeel.model.RuleCondition;
 
 import java.util.List;
 
-public final class FeelAstExpressionBuilder {
+public final class RuleConditionMapper {
 
-    private FeelAstExpressionBuilder() {
+    private RuleConditionMapper() {
     }
 
     /**

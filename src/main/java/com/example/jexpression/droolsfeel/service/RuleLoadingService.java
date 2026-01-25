@@ -1,6 +1,5 @@
-package com.example.jexpression.droolsfeel;
+package com.example.jexpression.droolsfeel.service;
 
-import com.example.jexpression.droolsfeel.converter.RuleConverter;
 import com.example.jexpression.droolsfeel.model.FeelRule;
 import com.example.jexpression.droolsfeel.model.RuleDefinition;
 import com.fasterxml.jackson.core.type.TypeReference;

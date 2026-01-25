@@ -1,4 +1,4 @@
-package com.example.jexpression.droolsfeel;
+package com.example.jexpression.droolsfeel.service;
 
 import com.example.jexpression.droolsfeel.model.EvaluationResult;
 import com.example.jexpression.droolsfeel.model.FeelRule;
