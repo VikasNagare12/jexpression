@@ -20,10 +20,7 @@ import java.util.stream.Stream;
  * // Auto-lookup by operator and type
  * FeelTemplate.forOperator("Equals", DataType.STRING).apply("country", "SA")
  * </pre>
- *
- * @deprecated Use the AST-based approach (FeelAst, FeelNode) instead.
  */
-@Deprecated
 public enum FeelTemplate {
 
     // Comparators
