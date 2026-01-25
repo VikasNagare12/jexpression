@@ -1,35 +1,60 @@
 package com.example.jexpression.ast;
 
+import java.util.Set;
+
+/**
+ * FEEL Operators with rich metadata for validation and rendering.
+ */
 public enum FeelOperator {
-    EQUALS("=", false),
-    NOT_EQUALS("!=", false),
-    GREATER(">", false),
-    GREATER_OR_EQUAL(">=", false),
-    LESS("<", false),
-    LESS_OR_EQUAL("<=", false),
-    AND("and", false),
-    OR("or", false),
-    NOT("not", true), // Unary function style? Or operator? NOT is usually operator "not(x)" or "not
-                      // x". FEEL uses function style often.
-    IN("in", false),
-    CONTAINS("contains", true),
-    STARTS_WITH("starts with", true),
-    ENDS_WITH("ends with", true),
-    LOWER_CASE("lower case", true);
+    // Comparison
+    EQUALS("=", Arity.BINARY, Set.of(DataType.ANY), false),
+    NOT_EQUALS("!=", Arity.BINARY, Set.of(DataType.ANY), false),
+    GREATER(">", Arity.BINARY, Set.of(DataType.NUMBER, DataType.DATE), false),
+    GREATER_OR_EQUAL(">=", Arity.BINARY, Set.of(DataType.NUMBER, DataType.DATE), false),
+    LESS("<", Arity.BINARY, Set.of(DataType.NUMBER, DataType.DATE), false),
+    LESS_OR_EQUAL("<=", Arity.BINARY, Set.of(DataType.NUMBER, DataType.DATE), false),
 
-    private final String feel;
-    private final boolean isFunction;
+    // Logic
+    AND("and", Arity.BINARY, Set.of(DataType.BOOLEAN), false),
+    OR("or", Arity.BINARY, Set.of(DataType.BOOLEAN), false),
+    NOT("not", Arity.UNARY, Set.of(DataType.BOOLEAN), true), // Render as function: not(x)
 
-    FeelOperator(String feel, boolean isFunction) {
-        this.feel = feel;
-        this.isFunction = isFunction;
+    // Collection / String
+    IN("in", Arity.BINARY, Set.of(DataType.ANY), false),
+    CONTAINS("contains", Arity.BINARY, Set.of(DataType.STRING), true),
+    STARTS_WITH("starts with", Arity.BINARY, Set.of(DataType.STRING), true),
+    ENDS_WITH("ends with", Arity.BINARY, Set.of(DataType.STRING), true),
+    LOWER_CASE("lower case", Arity.UNARY, Set.of(DataType.STRING), true);
+
+    public enum Arity {
+        UNARY, BINARY
     }
 
-    public String feel() {
-        return feel;
+    private final String symbol;
+    private final Arity arity;
+    private final Set<DataType> supportedTypes;
+    private final boolean isFunctionStyle;
+
+    FeelOperator(String symbol, Arity arity, Set<DataType> supportedTypes, boolean isFunctionStyle) {
+        this.symbol = symbol;
+        this.arity = arity;
+        this.supportedTypes = supportedTypes;
+        this.isFunctionStyle = isFunctionStyle;
     }
 
-    public boolean isFunction() {
-        return isFunction;
+    public String symbol() {
+        return symbol;
+    }
+
+    public Arity arity() {
+        return arity;
+    }
+
+    public boolean supports(DataType type) {
+        return supportedTypes.contains(DataType.ANY) || supportedTypes.contains(type);
+    }
+
+    public boolean isFunctionStyle() {
+        return isFunctionStyle;
     }
 }

@@ -2,6 +2,9 @@ package com.example.jexpression.ast;
 
 import java.util.List;
 
+/**
+ * Factory for creating valid FEEL AST nodes.
+ */
 public final class FeelAst {
 
     private FeelAst() {
@@ -11,17 +14,18 @@ public final class FeelAst {
         return new FieldNode(name);
     }
 
-    public static LiteralNode value(Object v, DataType t) {
-        return new LiteralNode(v, t);
+    public static LiteralNode value(String rawValue, DataType t) {
+        return new LiteralNode(rawValue, t);
     }
 
-    public static ListNode list(DataType t, List<String> values) {
-        if (values == null)
-            return new ListNode(List.of());
-        return new ListNode(
-                values.stream()
-                        .map(v -> new LiteralNode(v, t))
-                        .toList());
+    public static ListNode list(DataType t, List<String> rawValues) {
+        if (rawValues == null) {
+            return new ListNode(List.of(), t);
+        }
+        List<FeelNode> elements = rawValues.stream()
+                .map(v -> (FeelNode) new LiteralNode(v, t))
+                .toList();
+        return new ListNode(elements, t);
     }
 
     public static BinaryNode eq(FeelNode l, FeelNode r) {
@@ -46,6 +50,10 @@ public final class FeelAst {
 
     public static BinaryNode and(FeelNode l, FeelNode r) {
         return new BinaryNode(FeelOperator.AND, l, r);
+    }
+
+    public static BinaryNode or(FeelNode l, FeelNode r) {
+        return new BinaryNode(FeelOperator.OR, l, r);
     }
 
     public static UnaryNode not(FeelNode n) {
