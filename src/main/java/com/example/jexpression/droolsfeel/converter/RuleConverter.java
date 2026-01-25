@@ -42,7 +42,7 @@ public class RuleConverter {
 
     private FeelRule toFeelRule(RuleDefinition def) {
         String expression = def.conditions().stream()
-                .map(FeelExpressionBuilder::toFeel)
+                .map(FeelAstExpressionBuilder::toFeel)
                 .collect(Collectors.joining(" and "));
 
         CompiledExpression compiled = compileExpression(def.code(), expression);
