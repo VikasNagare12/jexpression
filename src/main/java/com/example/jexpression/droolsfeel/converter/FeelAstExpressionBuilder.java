@@ -24,7 +24,13 @@ public final class FeelAstExpressionBuilder {
     public static FeelNode buildAst(RuleCondition c) {
         String field = c.field();
         String op = c.op();
-        DataType type = DataType.valueOf(c.type().toUpperCase());
+        DataType type;
+        try {
+            type = DataType.valueOf(c.type() == null ? "STRING" : c.type().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            // "Error porn" avoidance: graceful degradation
+            type = DataType.STRING;
+        }
         List<String> values = c.values();
 
         // Handle Lower Case logic for Strings
