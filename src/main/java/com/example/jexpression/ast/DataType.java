@@ -6,34 +6,34 @@ package com.example.jexpression.ast;
 public enum DataType {
     STRING {
         @Override
-        public String format(Object val) {
+        public String formatLiteral(Object val) {
             return quote(String.valueOf(val));
         }
     },
     NUMBER {
         @Override
-        public String format(Object val) {
+        public String formatLiteral(Object val) {
             // Numbers are raw (no quotes)
             return String.valueOf(val);
         }
     },
     BOOLEAN {
         @Override
-        public String format(Object val) {
+        public String formatLiteral(Object val) {
             // Booleans are raw
             return String.valueOf(val);
         }
     },
     DATE {
         @Override
-        public String format(Object val) {
+        public String formatLiteral(Object val) {
             // Dates are wrapped: date("2023-01-01")
             return "date(" + quote(String.valueOf(val)) + ")";
         }
     },
     ANY {
         @Override
-        public String format(Object val) {
+        public String formatLiteral(Object val) {
             return quote(String.valueOf(val));
         }
     };
@@ -43,7 +43,7 @@ public enum DataType {
      * e.g. "foo" -> "\"foo\""
      * 100 -> "100"
      */
-    public abstract String format(Object val);
+    public abstract String formatLiteral(Object val);
 
     private static String quote(String s) {
         if (s == null || "null".equals(s))

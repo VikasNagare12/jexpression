@@ -1,6 +1,6 @@
 package com.example.jexpression.service;
 
-import com.example.jexpression.mapper.RuleConditionMapper;
+import com.example.jexpression.mapper.RuleConditionToExpressionMapper;
 import com.example.jexpression.model.FeelRule;
 import com.example.jexpression.model.RuleDefinition;
 import org.kie.dmn.feel.FEEL;
@@ -43,7 +43,7 @@ public class RuleConverter {
 
     private FeelRule toFeelRule(RuleDefinition def) {
         String expression = def.conditions().stream()
-                .map(RuleConditionMapper::toFeel)
+                .map(RuleConditionToExpressionMapper::toFeel)
                 .collect(Collectors.joining(" and "));
 
         CompiledExpression compiled = compileExpression(def.code(), expression);
