@@ -1,54 +1,64 @@
 package com.example.jexpression.ast;
 
 /**
- * Supported data types in the FEEL engine with centralized formatting logic.
+ * Data types with centralized literal formatting for FEEL expressions.
  */
 public enum DataType {
     STRING {
         @Override
-        public String formatLiteral(Object val) {
-            return quote(String.valueOf(val));
+        public String format(String value) {
+            if (value == null)
+                return "null";
+            return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
         }
     },
     NUMBER {
         @Override
-        public String formatLiteral(Object val) {
-            // Numbers are raw (no quotes)
-            return String.valueOf(val);
+        public String format(String value) {
+            return value; // Numbers are raw
         }
     },
     BOOLEAN {
         @Override
-        public String formatLiteral(Object val) {
-            // Booleans are raw
-            return String.valueOf(val);
+        public String format(String value) {
+            return value; // true/false raw
         }
     },
     DATE {
         @Override
-        public String formatLiteral(Object val) {
-            // Dates are wrapped: date("2023-01-01")
-            return "date(" + quote(String.valueOf(val)) + ")";
-        }
-    },
-    ANY {
-        @Override
-        public String formatLiteral(Object val) {
-            return quote(String.valueOf(val));
+        public String format(String value) {
+            if (value == null)
+                return "null";
+            return "date(\"" + value + "\")";
         }
     };
 
     /**
-     * Format a raw value into a valid FEEL syntax string literal.
-     * e.g. "foo" -> "\"foo\""
-     * 100 -> "100"
+     * Format a raw value into valid FEEL syntax.
      */
-    public abstract String formatLiteral(Object val);
+    public abstract String format(String value);
 
-    private static String quote(String s) {
-        if (s == null || "null".equals(s))
-            return "null";
-        // Escape quotes and wrap
-        return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+    /**
+     * Format a list of values into FEEL list syntax: [v1, v2, v3]
+     */
+    public String formatList(java.util.List<String> values) {
+        if (values == null || values.isEmpty())
+            return "[]";
+        return "[" + values.stream()
+                .map(this::format)
+                .collect(java.util.stream.Collectors.joining(", ")) + "]";
+    }
+
+    /**
+     * Parse type string to enum, defaults to STRING.
+     */
+    public static DataType from(String type) {
+        if (type == null)
+            return STRING;
+        try {
+            return valueOf(type.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return STRING;
+        }
     }
 }

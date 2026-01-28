@@ -1,99 +1,140 @@
 package com.example.jexpression.ast;
 
-import java.util.function.Predicate;
+import java.util.List;
 
 /**
- * FEEL Operators with rich metadata for validation and rendering.
- * Refactored to use behavioral type validation instead of collection-based
- * checks.
+ * FEEL operators with self-contained expression generation.
+ * Each operator knows how to render itself to FEEL syntax.
  */
 public enum ExpressionOperator {
-    // Comparison
-    EQUALS("=", TypeRules::isComparable, false),
-    NOT_EQUALS("!=", TypeRules::isComparable, false),
-    GREATER(">", TypeRules::isOrdered, false),
-    GREATER_OR_EQUAL(">=", TypeRules::isOrdered, false),
-    LESS("<", TypeRules::isOrdered, false),
-    LESS_OR_EQUAL("<=", TypeRules::isOrdered, false),
 
-    // Logic
-    AND("and", TypeRules::isBoolean, false),
-    OR("or", TypeRules::isBoolean, false),
-    NOT("not", TypeRules::isBoolean, true), // Render as function: not(x)
-
-    // Collection / String
-    IN("in", TypeRules::allowAll, false),
-    CONTAINS("contains", TypeRules::isString, true),
-    STARTS_WITH("starts with", TypeRules::isString, true),
-    ENDS_WITH("ends with", TypeRules::isString, true),
-    LOWER_CASE("lower case", TypeRules::isString, true);
-
-    private final String symbol;
-    private final Predicate<DataType> typeValidator;
-    private final boolean isFunctionStyle;
-
-    ExpressionOperator(String symbol, Predicate<DataType> typeValidator, boolean isFunctionStyle) {
-        this.symbol = symbol;
-        this.typeValidator = typeValidator;
-        this.isFunctionStyle = isFunctionStyle;
-    }
-
-    public String symbol() {
-        return symbol;
-    }
-
-    public boolean isSupportedFor(DataType type) {
-        return typeValidator.test(type);
-    }
-
-    public boolean isFunctionStyle() {
-        return isFunctionStyle;
-    }
+    EQUALS {
+        @Override
+        public String toFeel(String field, List<String> values, DataType type) {
+            return field + " = " + type.format(first(values));
+        }
+    },
+    NOT_EQUALS {
+        @Override
+        public String toFeel(String field, List<String> values, DataType type) {
+            return field + " != " + type.format(first(values));
+        }
+    },
+    GREATER {
+        @Override
+        public String toFeel(String field, List<String> values, DataType type) {
+            return field + " > " + type.format(first(values));
+        }
+    },
+    GREATER_OR_EQUAL {
+        @Override
+        public String toFeel(String field, List<String> values, DataType type) {
+            return field + " >= " + type.format(first(values));
+        }
+    },
+    LESS {
+        @Override
+        public String toFeel(String field, List<String> values, DataType type) {
+            return field + " < " + type.format(first(values));
+        }
+    },
+    LESS_OR_EQUAL {
+        @Override
+        public String toFeel(String field, List<String> values, DataType type) {
+            return field + " <= " + type.format(first(values));
+        }
+    },
+    BETWEEN {
+        @Override
+        public String toFeel(String field, List<String> values, DataType type) {
+            String v1 = type.format(first(values));
+            String v2 = type.format(second(values));
+            return field + " >= " + v1 + " and " + field + " <= " + v2;
+        }
+    },
+    IN {
+        @Override
+        public String toFeel(String field, List<String> values, DataType type) {
+            return field + " in " + type.formatList(values);
+        }
+    },
+    NOT_IN {
+        @Override
+        public String toFeel(String field, List<String> values, DataType type) {
+            return "not(" + field + " in " + type.formatList(values) + ")";
+        }
+    },
+    CONTAINS {
+        @Override
+        public String toFeel(String field, List<String> values, DataType type) {
+            return "contains(" + field + ", " + type.format(first(values)) + ")";
+        }
+    },
+    STARTS_WITH {
+        @Override
+        public String toFeel(String field, List<String> values, DataType type) {
+            return "starts with(" + field + ", " + type.format(first(values)) + ")";
+        }
+    },
+    ENDS_WITH {
+        @Override
+        public String toFeel(String field, List<String> values, DataType type) {
+            return "ends with(" + field + ", " + type.format(first(values)) + ")";
+        }
+    },
+    IS_NULL {
+        @Override
+        public String toFeel(String field, List<String> values, DataType type) {
+            return field + " = null";
+        }
+    },
+    IS_NOT_NULL {
+        @Override
+        public String toFeel(String field, List<String> values, DataType type) {
+            return field + " != null";
+        }
+    };
 
     /**
-     * Render the operator expression.
+     * Generate FEEL expression for this operator.
      */
-    public String toFeelExpression(String left, String right) {
-        if (isFunctionStyle) {
-            // Function call style: op(left, right) or op(left)
-            if (right == null) {
-                return symbol + "(" + left + ")"; // Unary function
-            }
-            return symbol + "(" + left + ", " + right + ")"; // Binary function
-        } else {
-            // Infix style: left op right
-            if (right == null) {
-                return symbol + " " + left; // Unary prefix (Rare in FEEL, mostly 'not' which is function style usually
-                                            // but here defined as function style)
-            }
-            return left + " " + symbol + " " + right;
-        }
-    }
+    public abstract String toFeel(String field, List<String> values, DataType type);
 
     /**
-     * Centralized type compatibility rules.
-     * Replaces Sets and Wildcards with explicit, readable behavior.
+     * Parse operator string to enum.
      */
-    private static class TypeRules {
-        // Any non-void/non-unknown type is generally comparable for equality
-        static boolean isComparable(DataType t) {
-            return t != DataType.ANY;
-        }
+    public static ExpressionOperator from(String op) {
+        if (op == null)
+            throw new IllegalArgumentException("Operator cannot be null");
 
-        static boolean isOrdered(DataType t) {
-            return t == DataType.NUMBER || t == DataType.DATE;
-        }
+        return switch (op.trim().toUpperCase()) {
+            case "EQUALS" -> EQUALS;
+            case "NOTEQUALS" -> NOT_EQUALS;
+            case "GREATER" -> GREATER;
+            case "GREATEROREQUAL" -> GREATER_OR_EQUAL;
+            case "LESS" -> LESS;
+            case "LESSOREQUAL" -> LESS_OR_EQUAL;
+            case "BETWEEN" -> BETWEEN;
+            case "IN" -> IN;
+            case "NOTIN" -> NOT_IN;
+            case "CONTAINS" -> CONTAINS;
+            case "STARTSWITH" -> STARTS_WITH;
+            case "ENDSWITH" -> ENDS_WITH;
+            case "ISNULL" -> IS_NULL;
+            case "ISNOTNULL", "EXISTS" -> IS_NOT_NULL;
+            default -> throw new IllegalArgumentException("Unknown operator: " + op);
+        };
+    }
 
-        static boolean isBoolean(DataType t) {
-            return t == DataType.BOOLEAN;
-        }
+    // ─────────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────────
 
-        static boolean isString(DataType t) {
-            return t == DataType.STRING;
-        }
+    protected static String first(List<String> values) {
+        return (values != null && !values.isEmpty()) ? values.get(0) : null;
+    }
 
-        static boolean allowAll(DataType t) {
-            return true;
-        }
+    protected static String second(List<String> values) {
+        return (values != null && values.size() > 1) ? values.get(1) : null;
     }
 }
