@@ -1,13 +1,11 @@
 package com.example.jexpression.mapper;
 
-import com.example.jexpression.ast.DataType;
-import com.example.jexpression.ast.ExpressionOperator;
 import com.example.jexpression.model.RuleCondition;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class RuleConditionMapperTest {
 
@@ -46,5 +44,17 @@ class RuleConditionMapperTest {
         var condition = new RuleCondition("beneficiaryIban", "string", "Contains", "static", List.of("DE"));
         String feel = RuleConditionMapper.toFeel(condition);
         assertEquals("contains(lower case(beneficiaryIban), \"de\")", feel);
+    }
+
+    @Test
+    void testNullValuesThrowsException() {
+        var condition = new RuleCondition("amount", "number", "Greater", "static", null);
+        assertThrows(IllegalArgumentException.class, () -> RuleConditionMapper.toFeel(condition));
+    }
+
+    @Test
+    void testEmptyValuesThrowsException() {
+        var condition = new RuleCondition("amount", "number", "Greater", "static", List.of());
+        assertThrows(IllegalArgumentException.class, () -> RuleConditionMapper.toFeel(condition));
     }
 }

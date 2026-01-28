@@ -2,7 +2,7 @@ package com.example.jexpression;
 
 import com.example.jexpression.model.EvaluationResult;
 import com.example.jexpression.model.FeelRule;
-import com.example.jexpression.service.FeelRuleEngine;
+import com.example.jexpression.service.FeelRuleService;
 import com.example.jexpression.service.RuleLoadingService;
 import com.example.jexpression.model.Transaction;
 import org.springframework.stereotype.Component;
@@ -21,12 +21,13 @@ public class DroolsFeelDemo {
     private static final String RULES_PATH = "feel-raw-input.json";
 
     private final RuleLoadingService ruleLoadingService;
-    private final FeelRuleEngine engine;
+    private final FeelRuleService ruleService;
 
-    public DroolsFeelDemo(RuleLoadingService ruleLoadingService, FeelRuleEngine engine) {
+    public DroolsFeelDemo(RuleLoadingService ruleLoadingService, FeelRuleService ruleService) {
         this.ruleLoadingService = ruleLoadingService;
-        this.engine = engine;
+        this.ruleService = ruleService;
     }
+
 
     public void run() {
         printHeader();
@@ -49,14 +50,14 @@ public class DroolsFeelDemo {
         // STEP 3: Evaluate rules
         // ══════════════════════════════════════════════════════════════
         printStep(3, "Evaluating rules against transaction");
-        List<EvaluationResult> results = engine.evaluate(rules, tx, "transaction");
+        List<EvaluationResult> results = ruleService.evaluate(rules, tx, "transaction");
         printResults(results);
 
         // ══════════════════════════════════════════════════════════════
         // STEP 4: Quick API demo
         // ══════════════════════════════════════════════════════════════
         printStep(4, "Quick API - Get failed codes");
-        List<String> failedCodes = engine.getFailedCodes(rules, tx, "transaction");
+        List<String> failedCodes = ruleService.getFailedCodes(rules, tx, "transaction");
         printFailedCodes(failedCodes);
 
         printFooter();

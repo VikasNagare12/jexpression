@@ -1,5 +1,6 @@
 package com.example.jexpression.service;
 
+import com.example.jexpression.mapper.RuleConditionMapper;
 import com.example.jexpression.model.FeelRule;
 import com.example.jexpression.model.RuleDefinition;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -25,11 +26,11 @@ public class RuleLoadingService {
     private static final Logger log = LoggerFactory.getLogger(RuleLoadingService.class);
 
     private final ObjectMapper objectMapper;
-    private final RuleConverter ruleConverter;
+    private final RuleConditionMapper ruleConditionMapper;
 
-    public RuleLoadingService(ObjectMapper objectMapper, RuleConverter ruleConverter) {
+    public RuleLoadingService(ObjectMapper objectMapper, RuleConditionMapper ruleConditionMapper) {
         this.objectMapper = objectMapper;
-        this.ruleConverter = ruleConverter;
+        this.ruleConditionMapper = ruleConditionMapper;
     }
 
     /**
@@ -66,7 +67,7 @@ public class RuleLoadingService {
 
         try {
             List<RuleDefinition> definitions = parseJsonString(jsonContent);
-            return ruleConverter.convert(definitions);
+            return ruleConditionMapper.convert(definitions);
         } catch (IOException e) {
             throw new RuleLoadingException("Failed to parse JSON content", e);
         }
@@ -77,7 +78,7 @@ public class RuleLoadingService {
      */
     public List<FeelRule> loadFromStream(InputStream input) throws IOException {
         List<RuleDefinition> definitions = parseStream(input);
-        return ruleConverter.convert(definitions);
+        return ruleConditionMapper.convert(definitions);
     }
 
     // ─────────────────────────────────────────────────────────────

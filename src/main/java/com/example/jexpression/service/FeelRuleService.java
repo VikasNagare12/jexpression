@@ -13,13 +13,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Production-ready FEEL Rule Evaluation Engine.
+ * Production-ready FEEL Rule Evaluation Service.
  * Thread-safe, with timing metrics.
  */
 @Service
-public class FeelRuleEngine {
+public class FeelRuleService {
 
-    private static final Logger log = LoggerFactory.getLogger(FeelRuleEngine.class);
+    private static final Logger log = LoggerFactory.getLogger(FeelRuleService.class);
 
     // Thread-safe FEEL instance per thread
     private static final ThreadLocal<FEEL> FEEL_INSTANCE = ThreadLocal.withInitial(FEEL::newInstance);
