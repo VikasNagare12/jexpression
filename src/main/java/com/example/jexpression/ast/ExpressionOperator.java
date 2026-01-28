@@ -4,122 +4,125 @@ import java.util.List;
 
 /**
  * FEEL operators with self-contained expression generation.
- * Each operator knows how to render itself to FEEL syntax.
+ * Expects pre-formatted literal values from the boundary layer.
+ * Operator strings must be normalized (trimmed + uppercased) before calling
+ * from().
  */
 public enum ExpressionOperator {
 
     EQUALS {
         @Override
-        public String buildFeelExpression(String field, List<String> values, DataType type) {
-            requireValues(values, "EQUALS");
-            return field + " = " + type.formatLiteral(first(values));
+        public String buildFeelExpression(String field, List<String> formattedValues) {
+            requireValues(formattedValues, "EQUALS");
+            return field + " = " + first(formattedValues);
         }
     },
     NOT_EQUALS {
         @Override
-        public String buildFeelExpression(String field, List<String> values, DataType type) {
-            requireValues(values, "NOT_EQUALS");
-            return field + " != " + type.formatLiteral(first(values));
+        public String buildFeelExpression(String field, List<String> formattedValues) {
+            requireValues(formattedValues, "NOT_EQUALS");
+            return field + " != " + first(formattedValues);
         }
     },
     GREATER {
         @Override
-        public String buildFeelExpression(String field, List<String> values, DataType type) {
-            requireValues(values, "GREATER");
-            return field + " > " + type.formatLiteral(first(values));
+        public String buildFeelExpression(String field, List<String> formattedValues) {
+            requireValues(formattedValues, "GREATER");
+            return field + " > " + first(formattedValues);
         }
     },
     GREATER_OR_EQUAL {
         @Override
-        public String buildFeelExpression(String field, List<String> values, DataType type) {
-            requireValues(values, "GREATER_OR_EQUAL");
-            return field + " >= " + type.formatLiteral(first(values));
+        public String buildFeelExpression(String field, List<String> formattedValues) {
+            requireValues(formattedValues, "GREATER_OR_EQUAL");
+            return field + " >= " + first(formattedValues);
         }
     },
     LESS {
         @Override
-        public String buildFeelExpression(String field, List<String> values, DataType type) {
-            requireValues(values, "LESS");
-            return field + " < " + type.formatLiteral(first(values));
+        public String buildFeelExpression(String field, List<String> formattedValues) {
+            requireValues(formattedValues, "LESS");
+            return field + " < " + first(formattedValues);
         }
     },
     LESS_OR_EQUAL {
         @Override
-        public String buildFeelExpression(String field, List<String> values, DataType type) {
-            requireValues(values, "LESS_OR_EQUAL");
-            return field + " <= " + type.formatLiteral(first(values));
+        public String buildFeelExpression(String field, List<String> formattedValues) {
+            requireValues(formattedValues, "LESS_OR_EQUAL");
+            return field + " <= " + first(formattedValues);
         }
     },
     BETWEEN {
         @Override
-        public String buildFeelExpression(String field, List<String> values, DataType type) {
-            requireMinValues(values, 2, "BETWEEN");
-            String v1 = type.formatLiteral(first(values));
-            String v2 = type.formatLiteral(second(values));
-            return field + " >= " + v1 + " and " + field + " <= " + v2;
+        public String buildFeelExpression(String field, List<String> formattedValues) {
+            requireMinValues(formattedValues, 2, "BETWEEN");
+            return field + " >= " + first(formattedValues) + " and " + field + " <= " + second(formattedValues);
         }
     },
     IN {
         @Override
-        public String buildFeelExpression(String field, List<String> values, DataType type) {
-            requireValues(values, "IN");
-            return field + " in " + type.formatLiteralList(values);
+        public String buildFeelExpression(String field, List<String> formattedValues) {
+            requireValues(formattedValues, "IN");
+            return field + " in [" + String.join(", ", formattedValues) + "]";
         }
     },
     NOT_IN {
         @Override
-        public String buildFeelExpression(String field, List<String> values, DataType type) {
-            requireValues(values, "NOT_IN");
-            return "not(" + field + " in " + type.formatLiteralList(values) + ")";
+        public String buildFeelExpression(String field, List<String> formattedValues) {
+            requireValues(formattedValues, "NOT_IN");
+            return "not(" + field + " in [" + String.join(", ", formattedValues) + "])";
         }
     },
     CONTAINS {
         @Override
-        public String buildFeelExpression(String field, List<String> values, DataType type) {
-            requireValues(values, "CONTAINS");
-            return "contains(" + field + ", " + type.formatLiteral(first(values)) + ")";
+        public String buildFeelExpression(String field, List<String> formattedValues) {
+            requireValues(formattedValues, "CONTAINS");
+            return "contains(" + field + ", " + first(formattedValues) + ")";
         }
     },
     STARTS_WITH {
         @Override
-        public String buildFeelExpression(String field, List<String> values, DataType type) {
-            requireValues(values, "STARTS_WITH");
-            return "starts with(" + field + ", " + type.formatLiteral(first(values)) + ")";
+        public String buildFeelExpression(String field, List<String> formattedValues) {
+            requireValues(formattedValues, "STARTS_WITH");
+            return "starts with(" + field + ", " + first(formattedValues) + ")";
         }
     },
     ENDS_WITH {
         @Override
-        public String buildFeelExpression(String field, List<String> values, DataType type) {
-            requireValues(values, "ENDS_WITH");
-            return "ends with(" + field + ", " + type.formatLiteral(first(values)) + ")";
+        public String buildFeelExpression(String field, List<String> formattedValues) {
+            requireValues(formattedValues, "ENDS_WITH");
+            return "ends with(" + field + ", " + first(formattedValues) + ")";
         }
     },
     IS_NULL {
         @Override
-        public String buildFeelExpression(String field, List<String> values, DataType type) {
+        public String buildFeelExpression(String field, List<String> formattedValues) {
             return field + " = null";
         }
     },
     IS_NOT_NULL {
         @Override
-        public String buildFeelExpression(String field, List<String> values, DataType type) {
+        public String buildFeelExpression(String field, List<String> formattedValues) {
             return field + " != null";
         }
     };
 
     /**
      * Generate FEEL expression for this operator.
+     * Values must be pre-formatted by the boundary layer.
      */
-    public abstract String buildFeelExpression(String field, List<String> values, DataType type);
+    public abstract String buildFeelExpression(String field, List<String> formattedValues);
 
     /**
-     * Parse operator string to enum.
+     * Parse normalized operator string to enum.
+     * Input must be trimmed and uppercased by the caller.
      */
-    public static ExpressionOperator from(String op) {
-        if (op == null)
+    public static ExpressionOperator from(String normalizedOp) {
+        if (normalizedOp == null) {
             throw new IllegalArgumentException("Operator cannot be null");
+        }
 
-        return switch (op.trim().toUpperCase()) {
+        return switch (normalizedOp) {
             case "EQUALS" -> EQUALS;
             case "NOTEQUALS" -> NOT_EQUALS;
             case "GREATER" -> GREATER;
@@ -134,35 +137,35 @@ public enum ExpressionOperator {
             case "ENDSWITH" -> ENDS_WITH;
             case "ISNULL" -> IS_NULL;
             case "ISNOTNULL", "EXISTS" -> IS_NOT_NULL;
-            default -> throw new IllegalArgumentException("Unknown operator: " + op);
+            default -> throw new IllegalArgumentException("Unknown operator: " + normalizedOp);
         };
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Guards
+    // Private Guards
     // ─────────────────────────────────────────────────────────────
 
-    protected static void requireValues(List<String> values, String operatorName) {
+    private static void requireValues(List<String> values, String operatorName) {
         if (values == null || values.isEmpty()) {
             throw new IllegalArgumentException(operatorName + " requires at least one value");
         }
     }
 
-    protected static void requireMinValues(List<String> values, int min, String operatorName) {
+    private static void requireMinValues(List<String> values, int min, String operatorName) {
         if (values == null || values.size() < min) {
             throw new IllegalArgumentException(operatorName + " requires at least " + min + " values");
         }
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Helpers
+    // Private Helpers
     // ─────────────────────────────────────────────────────────────
 
-    protected static String first(List<String> values) {
+    private static String first(List<String> values) {
         return values.get(0);
     }
 
-    protected static String second(List<String> values) {
+    private static String second(List<String> values) {
         return values.get(1);
     }
 }

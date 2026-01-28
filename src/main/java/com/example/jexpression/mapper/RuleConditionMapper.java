@@ -16,13 +16,14 @@ import java.util.stream.Collectors;
 
 /**
  * Single entry point for all rule conversion.
- * Converts RuleDefinition → FeelRule (compiled).
- * Converts RuleCondition → FEEL String.
+ * Formats and normalizes all values at the boundary before passing to
+ * operators.
  */
 @Component
 public class RuleConditionMapper {
 
     private static final Logger log = LoggerFactory.getLogger(RuleConditionMapper.class);
+    private static final String CONDITION_JOINER = " and ";
 
     private final FEEL feel = FEEL.newInstance();
 
@@ -52,7 +53,7 @@ public class RuleConditionMapper {
     private FeelRule toFeelRule(RuleDefinition def) {
         String expression = def.conditions().stream()
                 .map(RuleConditionMapper::toFeel)
-                .collect(Collectors.joining(" and "));
+                .collect(Collectors.joining(CONDITION_JOINER));
 
         CompiledExpression compiled = compileExpression(def.code(), expression);
 
@@ -86,26 +87,53 @@ public class RuleConditionMapper {
      * Convert a single RuleCondition to its FEEL expression string.
      */
     public static String toFeel(RuleCondition condition) {
-        String field = condition.field();
         DataType type = DataType.from(condition.type());
-        ExpressionOperator operator = ExpressionOperator.from(condition.op());
-        List<String> values = prepareValues(condition.values(), type);
+        String normalizedOp = normalizeOperator(condition.op());
+        ExpressionOperator operator = ExpressionOperator.from(normalizedOp);
 
-        // For string comparisons, wrap field in lower case
-        if (type == DataType.STRING) {
-            field = "lower case(" + field + ")";
-        }
+        String field = wrapFieldForCaseInsensitiveMatch(condition.field(), type);
+        List<String> formattedValues = formatLiterals(condition.values(), type);
 
-        return operator.buildFeelExpression(field, values, type);
+        return operator.buildFeelExpression(field, formattedValues);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Normalization Helpers
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Normalize operator string once at the boundary.
+     */
+    private static String normalizeOperator(String op) {
+        if (op == null)
+            return null;
+        return op.trim().toUpperCase();
     }
 
     /**
-     * Prepare values (lowercase for strings).
+     * Wrap field in lower case() for case-insensitive string matching.
      */
-    private static List<String> prepareValues(List<String> values, DataType type) {
-        if (values == null || type != DataType.STRING) return values;
+    private static String wrapFieldForCaseInsensitiveMatch(String field, DataType type) {
+        if (type == DataType.STRING) {
+            return "lower case(" + field + ")";
+        }
+        return field;
+    }
+
+    /**
+     * Format values: lowercase strings, then apply literal formatting.
+     */
+    private static List<String> formatLiterals(List<String> values, DataType type) {
+        if (values == null)
+            return null;
+
         return values.stream()
-                .map(v -> v == null ? null : v.toLowerCase())
+                .map(v -> {
+                    if (v == null)
+                        return "null";
+                    String processed = (type == DataType.STRING) ? v.toLowerCase() : v;
+                    return type.formatLiteral(processed);
+                })
                 .toList();
     }
 }
